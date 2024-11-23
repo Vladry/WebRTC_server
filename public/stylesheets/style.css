@@ -1,0 +1,17 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif
+}
+
+p {font-size: 2em;}
+
+a
+{ color: #005fff;
+  font-size: 2em;
+display: block;
+padding: 0.5em 0.5em 0.5em}
+
+.testing {
+  color: chocolate;
+  font-size: 1em;
+}

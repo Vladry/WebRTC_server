@@ -1,0 +1,13 @@
+$urlColor: #ffB7FF;
+$tytleColor: #002f2f;
+
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif
+}
+title {color: $tytleColor}
+
+a
+{ color: $urlColor;
+  display: block;
+  padding: 0.5em 0.5em 0.5em}
