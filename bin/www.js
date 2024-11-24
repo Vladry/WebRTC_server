@@ -7,7 +7,44 @@
 const app = require('../app');
 const debug = require('debug')('webrtc-server:server');
 const http = require('http');
-require('dotenv').config();
+const locations =require( '../locations.json');
+require('dotenv').config({path: `${locations.env}`});
+
+/**
+ * Готовим переменные под сертификат для https
+ * **/
+const https = require('https');
+const fs = require('fs');
+const path = require("path");
+
+//  Новая сертификация: https
+const key = fs.readFileSync(path.join(__dirname, "../secrets/key.pem"), 'utf8');
+const cert = fs.readFileSync(path.join(__dirname, "../secrets/cert.pem"), 'utf8');
+const credentials = {key: key, cert: cert,  secureProtocol: 'TLS_method',
+  ciphers: [
+    'ECDHE-RSA-AES128-GCM-SHA256',
+    'ECDHE-RSA-AES256-GCM-SHA384',
+    'AES128-GCM-SHA256',
+    'AES256-GCM-SHA384',
+  ].join(':'),
+}; // Отключение TLS 1.0 и 1.1};
+/*
+console.log("key: ", key);
+console.log('cert: ', cert);
+console.log('noTLSv1:  ' + noTLSv1);
+console.log('noTLSv1_1: ', noTLSv1_1);
+*/
+
+
+//  Старая сертификация: https
+/*
+const https = require('https');
+const fs = require('fs');
+const path = require("path");
+const privateKey = fs.readFileSync(path.join(__dirname, "../secrets/private.key"), 'utf8');
+const certificate = fs.readFileSync(path.join(__dirname, "../secrets/server.crt"), 'utf8');
+const credentials = {key: privateKey, cert: certificate};
+*/
 
 /**
  * Get port from environment and store in Express.
@@ -20,7 +57,8 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-const server = http.createServer(app);
+// const server = http.createServer(app); // это создание http сервера, а это:
+const server = https.createServer(credentials, app); // это создание https сервера
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -29,7 +67,7 @@ const server = http.createServer(app);
 // server.listen(port,'0.0.0.0');
 // server.listen(port);
 server.listen(port, '0.0.0.0', () => {
-  console.log('Server is listening on port 3003')});
+  console.log(`Server is listening on port ${port}`)});
 server.on('error', onError);
 server.on('listening', onListening);
 

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>USB Camera Stream with Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f0f0f0;
+    }
+    video {
+      width: 60%;
+      height: auto;
+      background: black;
+      margin: 20px;
+    }
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .dashboard label {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <video id="cameraStream" autoplay playsinline controls></video>
+  <div class="dashboard">
+    <label>
+      Выбор устройства камеры:
+      <select id="cameraSelect"></select>
+    </label>
+    <div><label>
+      Яркость:
+      <input value="70" type="range" id="brightness" min="65" max="80" step="1">
+    </label>
+	<span id="brightnessValue"></span>
+	</div>
+    <div><label>
+      Контраст:
+      <input value="20" type="range" id="contrast" min="10" max="30" step="1">
+    </label>
+	<span id="contrastValue"></span>
+	</div>
+	
+	<div><label>Частота Кадров:
+	<input disabled id="frameRate" type="range" min="10" max="100" step="1">
+	</label><span id="frameRateValue"></span></div>
+	
+	<div><label>Ширина, px:
+	<select id="widthSelect">
+	<option value="640">640</option>
+	<option value="1280" selected>1280</option>
+	<option value="1920">1920</option>
+	<option value="2560" disabled>2560</option>
+	<option value="3840" disabled>3840</option>
+	</select></label>
+	</div>
+
+  </div>
+
+  <script>
+    (async function () {
+      let currentStream;
+      const videoElement = document.getElementById('cameraStream');
+      const cameraSelect = document.getElementById('cameraSelect');
+      const brightnessControl = document.getElementById('brightness');
+      const contrastControl = document.getElementById('contrast');
+	  const brightnessValueEl = document.getElementById('brightnessValue');
+	  const contrastValueEl = document.getElementById('contrastValue');
+	  const frameRateEl = document.getElementById('frameRate');
+	  const frameRateValueEl = document.getElementById('frameRateValue');
+	  const widthResolutionEl= document.getElementById('widthSelect');
+	  const defaultWidthSuggested = widthResolutionEl.value;
+
+      // Функция для обновления списка доступных камер
+      async function updateCameraList() {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        cameraSelect.innerHTML = '';
+        videoDevices.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || `Камера ${index + 1}`;
+          cameraSelect.appendChild(option);
+        });
+      }
+
+      // Функция для запуска камеры с заданным разрешением и устройством
+      async function startCamera(deviceId, widthVal) {
+        // Остановка текущего потока, если он есть
+        if (currentStream) {
+          currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        const constraints = {
+          video: {
+            deviceId: deviceId ? { exact: deviceId } : undefined,
+            width: { ideal: widthVal || defaultWidthSuggested }, // Максимальное разрешение
+            //width: { ideal: 1920 }, // Максимальное разрешение
+            // height: { ideal: 1080 },
+			
+			//width: { ideal: 640 }, // или max: 1280 для 720p
+			//height: { ideal: 480 }, // пропорционально ширине
+			
+			
+			frameRate: { ideal: 30, max: 60 },
+			//facingMode: "user", //фронтальная
+			facingMode: "environment", //задняя
+			
+          },
+          audio: false
+        };
+
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoElement.srcObject = currentStream;
+      }
+
+      // Применение настроек яркости и контраста
+      function applySettings() {
+        const tracks = currentStream.getVideoTracks();
+        if (tracks.length > 0) {
+          const track = tracks[0];
+          const capabilities = track.getCapabilities();
+          const settings = track.getSettings();
+
+          const constraints = {};
+          if ('brightness' in capabilities) {
+            constraints.brightness = parseInt(brightnessControl.value / 100 * capabilities.brightness.max);
+			brightnessValueEl.textContent = brightnessControl.value;
+          }
+          if ('contrast' in capabilities) {
+            constraints.contrast = parseInt(contrastControl.value / 100 * capabilities.contrast.max);
+			contrastValueEl.textContent = contrastControl.value;
+          }
+		  
+		console.log("settings before:", JSON.stringify(settings.width, null, 2));
+
+	/*	  
+		settings.width  или  settings.frameRate таким же образом  изменить НЕЛЬЗЯ, нужно пере-запускать видео-поток как сделано выше в:
+		async function startCamera(deviceId) {}
+
+	*/	  
+
+	
+		//  console.log('capabilities: ', JSON.stringify(capabilities, null, 2));
+		//  console.log('constraints: ',  JSON.stringify(constraints,  null, 2));
+		console.log("settings after:", JSON.stringify(settings.width, null, 2));
+
+          track.applyConstraints(constraints).catch(error => {
+            console.error('Ошибка применения настроек:', error);
+          });
+        }
+      }
+
+      // События
+      cameraSelect.addEventListener('change', (e) => startCamera(e.target.value));
+	  brightnessControl.addEventListener('change', applySettings);
+	  contrastControl.addEventListener('change', applySettings);
+	  //frameRateEl.addEventListener('change', startCamera(deviceId));
+	  widthResolutionEl.addEventListener('change', async (e)=> await startCamera(cameraSelect.options[0].value, e.target.value));
+
+	  	  // Инициализация
+			await updateCameraList();
+			if (cameraSelect.options.length > 0) {
+				startCamera(cameraSelect.options[0].value);
+			}
+
+	  
+    })();
+  </script>
+</body>
+</html>

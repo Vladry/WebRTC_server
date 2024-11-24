@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-require('dotenv').config();
+const locations = require("../locations.json");
+require('dotenv').config({path: `${locations.env}`});
 const port = process.env.PORT || '3000';
 const MaxObj = {
     title: 'Макс!',
