@@ -1,14 +1,17 @@
 extends layout
 
 block content
-  h1= title
+  h= title
+  h2 Ответь "ДА" на запрос использовать камеру!!!
+  a(href="https://195.3.129.213:3003/html/dt.html") Посмотри себя на ПК или главн камера мобильного
+  a(href="https://195.3.129.213:3003/html/mob_dt.html") Посмотри себя на ПК или моб (задняя камера)
+  a(href="https://195.3.129.213:3003/html/mob.html") Посмотри себя на на мобильном (лицевая камера)!
+
+
   p  #{msg}
 
   img(src=imagePath, alt=title)
 
-  a.testing(href="https://localhost/html/dt.html") Посмотри себя! Ответь "ДА" на запрос использовать камеру
-  a(href="https//195.3.129.213:443/") на главную homepage  (для HTTPS)
+  a(href="https://195.3.129.213:3003/") на главную homepage
 
-  <h3>для тестирования сервера localhost</h3>
-  a.testing(href="https://localhost:443/") на главную homepage  (для localhost https)
 

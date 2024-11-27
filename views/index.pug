@@ -1,24 +1,16 @@
 extends layout
 
 block content
-  h1= title
+  h1 welcome #{title}
 
-  a.testing(href="https://localhost/html/dt.html") Посмотри себя! Ответь "ДА" на запрос использовать камеру
-
-  p Welcome #{title}
-  h3 для http://195.3.129.213:443 HTTPS
-  a(href="https://195.3.129.213:443/Nik") Николай, жми сюда!
-  a(href="https://195.3.129.213:443/Max") Макс, а ты - жми сюда!
-  a(href="https://195.3.129.213:443/Lesha") Лёша, велкам!
-  a(href="https://195.3.129.213:443/Vlad") Владу, сюда!
-  a(href="https://195.3.129.213:443/html/andr.html") Android Camera Client
+  p Здесь можно просмотреть свой профайл, либо включить камеру для само-осмотра.
+  <hr/>
+  h3 для http://195.3.129.213:3003 HTTPS
+  a(href="https://195.3.129.213:3003/Nik") Николай, жми сюда!
+  a(href="https://195.3.129.213:3003/Max") Макс, а ты - жми сюда!
+  a(href="https://195.3.129.213:3003/Lesha") Лёша, велкам!
+  a(href="https://195.3.129.213:3003/Vlad") Владу, сюда!
 
   <br><br><br><hr>
-
-  h3 для localhost:443 HTTPS
-  a(class= "testing" href="https://localhost:443/Nik") Николай, жми сюда!
-  a.testing(href="https://localhost:443/Max") Макс, а ты - жми сюда!
-  a.testing(href="https://localhost:443/Lesha") Лёша, велкам!
-  a.testing(href="https://localhost:443/Vlad") Владу, сюда!
 
 
