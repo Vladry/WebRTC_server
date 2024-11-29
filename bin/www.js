@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// require('../web_sockets');
+require ('../turn_server');
 
 /**
  * Module dependencies.
@@ -62,7 +62,7 @@ const server = https.createServer(credentials, app); // это создание 
  */
 
 server.listen(port, '0.0.0.0', () => {
-  // console.log(`Server is listening on port ${port}`)});
+  console.log(`Server is listening on port ${port}`);
   server.on('error', onError);
   server.on('listening', onListening);
 });
@@ -128,13 +128,10 @@ server.listen(port, '0.0.0.0', () => {
     console.info('listening on ' + addr.address + ":" + bind);
   }
 
+
+  // Создаем WebSocket сервер поверх HTTP сервера
 const wss = new WebSocket.Server({server});
-
-// module.exports = server;
-// module.exports = wss;
-
-
-console.log("wss: " + wss);
+console.log("wss starting... ");
 let clients = {};
 wss.on('connection', (ws) => {
   console.log('New client connected');
