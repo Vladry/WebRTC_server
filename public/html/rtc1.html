@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>USB Camera Stream with Dashboard</title>
+    <style>
+        #localVideo {
+            position: absolute;
+            width: 200px;
+            height: auto;
+            bottom: 10px;
+            right: 10px;
+            border: 2px solid white;
+        }
+
+        #remoteVideo {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+    <meta content="yes" name="mobile-web-app-capable"/>
+    <link href="icon.png" rel="icon" sizes="192x192"/>
+</head>
+<body>
+<div>
+    <video id="localVideo" autoplay muted playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+    <a href="https://195.3.129.213:3003/"> на главную homepage  (для HTTPS)</a>
+</div>
+<script>
+    (async function () {
+
+        const iceServers = [
+            {urls: 'stun:stun.l.google.com:19302'},
+            {urls: 'turn:195.3.129.213:3478', username: 'user1', credential: 'password1'},
+        ];
+
+        const peerConnection = new RTCPeerConnection({iceServers});
+
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                websocket.send(JSON.stringify({type: 'candidate', candidate: event.candidate}));
+            }
+        };
+
+        navigator.mediaDevices.getUserMedia({video: true, audio: true})
+            .then((stream) => {
+                stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
+                document.getElementById('localVideo').srcObject = stream;
+            });
+
+        peerConnection.ontrack = (event) => {
+            document.getElementById('remoteVideo').srcObject = event.streams[0];
+        };
+
+// WebSocket для обмена SDP и ICE-кандидатами
+//         const websocket = new WebSocket('ws://195.3.129.213:3003'); // для http
+        const websocket = new WebSocket('wss://195.3.129.213:3003'); //для https://
+
+        websocket.onmessage = (message) => {
+            const data = JSON.parse(message.data);
+
+            if (data.type === 'offer') {
+                peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
+                    .then(() => peerConnection.createAnswer())
+                    .then((answer) => peerConnection.setLocalDescription(answer))
+                    .then(() => websocket.send(JSON.stringify({type: 'answer', sdp: peerConnection.localDescription})));
+            } else if (data.type === 'answer') {
+                peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+            } else if (data.type === 'candidate') {
+                peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        };
+
+    })();
+</script>
+</body>
+</html>
