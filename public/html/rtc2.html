@@ -30,51 +30,36 @@
     <a href="https://195.3.129.213:3003/"> на главную homepage  (для HTTPS)</a>
 </div>
 <script>
-    (async function () {
-
-        const iceServers = [
-            {urls: 'stun:stun.l.google.com:19302'},
-            {urls: 'turn:195.3.129.213:3478', username: 'user2', credential: 'password2'},
-        ];
-
-        const peerConnection = new RTCPeerConnection({iceServers});
-
-        peerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-                websocket.send(JSON.stringify({type: 'candidate', candidate: event.candidate}));
+    const configuration = {
+        iceServers: [
+            {
+                urls: 'turn:relay1.expressturn.com:3478', // URL вашего TURN-сервера
+                username: 'efKJ3BZ6GM7MQQC95K',
+                credential: 'pNwYMsXUTLoTRXU2'
             }
-        };
+        ],
+        iceTransportPolicy: 'relay' // Использовать только TURN-кандидаты
+    };
 
-        navigator.mediaDevices.getUserMedia({video: true, audio: true})
-            .then((stream) => {
-                stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
-                document.getElementById('localVideo').srcObject = stream;
-            });
 
-        peerConnection.ontrack = (event) => {
-            document.getElementById('remoteVideo').srcObject = event.streams[0];
-        };
+/*
+const configuration = {
+    iceServers: [
+        {
+            urls: 'turn:195.3.129.213:3478', // URL вашего TURN-сервера
+            username: 'user2',
+            credential: 'password2'
+        }
+    ],
+    iceTransportPolicy: 'relay' // Использовать только TURN-кандидаты
+};
+*/
 
-// WebSocket для обмена SDP и ICE-кандидатами
-//         const websocket = new WebSocket('ws://195.3.129.213:3003'); // для http
-        const websocket = new WebSocket('wss://195.3.129.213:3003'); //для https://
 
-        websocket.onmessage = (message) => {
-            const data = JSON.parse(message.data);
 
-            if (data.type === 'offer') {
-                peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
-                    .then(() => peerConnection.createAnswer())
-                    .then((answer) => peerConnection.setLocalDescription(answer))
-                    .then(() => websocket.send(JSON.stringify({type: 'answer', sdp: peerConnection.localDescription})));
-            } else if (data.type === 'answer') {
-                peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-            } else if (data.type === 'candidate') {
-                peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-            }
-        };
-
-    })();
+    const clientId = 'client2'; // Уникальный идентификатор клиента
+    const targetId = 'client1'; // Идентификатор целевого клиента
 </script>
+<script src="../java_scripts/client_script.js"></script>
 </body>
 </html>
