@@ -62,7 +62,7 @@ const server = https.createServer(credentials, app); // это создание 
  */
 
 server.listen(port, '0.0.0.0', () => {
-  // console.log(`Server is listening on port ${port}`);
+  // console.log(` on port ${port}`);
   server.on('error', onError);
   server.on('listening', onListening);
 });
@@ -215,12 +215,11 @@ wss.on('connection', (ws) => {
 });
 
 
-const Turn = require('node-turn');
-
+const Turn = require('node-turn'); // Этот TURN сервер не используется (юзаю внешний), тут код -для примера
 const turnServer = new Turn({
   listeningPort: 3478,
   listeningIps: ['192.168.88.242'],
-  externalIps: ['195.3.129.213'],
+  externalIps: ['195.3.129.213'],  // к сожалению, так не работает и клиенты не могут "извне" достучаться до этого IP, использую внешний TURN- сервер
   allocationLifetime: 600, // Lifetime in seconds
   realm: 'myrealm',
   authMech: 'long-term',

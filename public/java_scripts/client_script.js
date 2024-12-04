@@ -103,17 +103,23 @@ peerConnection.onicecandidate = (event) => {  // Отправка кандида
 };
 
 peerConnection.ontrack = (event) => {
-    document.getElementById('remoteVideo').srcObject = event.streams[0];
+    const remoteVideoEl = document.getElementById('remoteVideo');
+    remoteVideoEl.srcObject = event.streams[0];
     console.log('Remote video stream set:', event.streams[0]);
+    remoteVideoEl.play().catch(error => { // запустить после добавления потока (т.к. автоплей не срабатывал на Андроиде, а на айфоне срабатывал)
+        console.error('Ошибка автозапуска видео после добавления трека:', error);
+    });
 };
 
 // Захват видео с локальной камеры
-navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-    document.getElementById('localVideo').srcObject = stream;
+// navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+navigator.mediaDevices.getUserMedia({ video: true, audio: {echoCancellation: true,} }).then((stream) => {
+    const localVideoEl = document.getElementById('localVideo');
+    localVideoEl.srcObject = stream;
     stream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, stream);
     });
-    // console.log('Local stream added to PeerConnection');
+     console.log('Local stream added to PeerConnection');
 }).catch((error) => {
     console.error('Error accessing media devices:', error);
 });
