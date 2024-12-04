@@ -1,6 +1,6 @@
 // Подключение к WebSocket-серверу
 const websocket = new WebSocket('wss://195.3.129.213:3003'); // Используйте wss для HTTPS
-
+const remoteVideoEl = document.getElementById('remoteVideo');
 
 websocket.onopen = () => {
     // console.log('WebSocket connected');
@@ -16,15 +16,15 @@ websocket.onopen = () => {
     websocket.send(JSON.stringify({
         type: 'initiate',
         targetId: targetId, // Запрос на установление соединения с targetId
-        from: clientId,
+        fromId: clientId,
     }));
-    console.log(`Initiated call with targetId = ${targetId}`);
+    console.log(`Initiate:  ${clientId} is calling ${targetId}`);
 };
 
 
 websocket.onmessage = async (message) => {
     const data = JSON.parse(message.data);
-    console.log('WebSocket message received: ', data);
+    // console.log('WebSocket message received: ', data);
 
     switch (data.type) {
         case 'initiate':
@@ -74,6 +74,14 @@ websocket.onmessage = async (message) => {
             await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
             break;
 
+        case 'checkAlive':
+            // ответ серверу на запрос на проверку жив ли я(клиент)
+            websocket.send(JSON.stringify({
+                type: 'imAlive',
+            }));
+            console.log(`Sending \"imAlive\" to server`);
+            break;
+
         default:
             console.error('Unknown message type: ', data.type);
     }
@@ -103,13 +111,17 @@ peerConnection.onicecandidate = (event) => {  // Отправка кандида
 };
 
 peerConnection.ontrack = (event) => {
-    const remoteVideoEl = document.getElementById('remoteVideo');
     remoteVideoEl.srcObject = event.streams[0];
     console.log('Remote video stream set:', event.streams[0]);
-    remoteVideoEl.play().catch(error => { // запустить после добавления потока (т.к. автоплей не срабатывал на Андроиде, а на айфоне срабатывал)
+};
+
+remoteVideoEl.onLoadeddata = () => {
+    // запустить после добавления потока (т.к. автоплей не срабатывал на Андроиде, а на айфоне срабатывал)
+    remoteVideoEl.play().catch(error => {
         console.error('Ошибка автозапуска видео после добавления трека:', error);
     });
-};
+}
+
 
 // Захват видео с локальной камеры
 // navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {

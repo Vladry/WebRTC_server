@@ -132,10 +132,14 @@ server.listen(port, '0.0.0.0', () => {
   // Создаем WebSocket сервер поверх HTTP сервера
 const wss = new WebSocket.Server({server});
 
-const clients = new Map(); // Используем Map для хранения клиентов
+const clients = new Map(); // Используем Map для хранения объектов ws всех клиентов с их Id в поле ws.clientId
 
 wss.on('connection', (ws) => {
   console.log('New client connected');
+  let timerConfirmAlive = null;
+  let timerRequestAlive = null;
+  let requestTimeout = 10000;
+  let aliveTimeout = requestTimeout * 2;
 
   // Добавляем поле для хранения clientId в объекте WebSocket
   ws.clientId = null;
@@ -145,9 +149,9 @@ wss.on('connection', (ws) => {
 
     switch (data.type) {
       case 'register':
-        // Сохраняем clientId в WebSocket и в Map
-        ws.clientId = data.clientId;
-        clients.set(data.clientId, ws);
+
+        ws.clientId = data.clientId;     // Сохраняем clientId в объекте WebSocket для последующей отправки собеседникам всего объекта WebSocket уже с Id данного клиента
+        clients.set(data.clientId, ws);  //в Map, по ключу клиентского Id размещаем этот объект ws, который потом перешлём собеседнику для создания связи
         console.log(`Client registered: ${data.clientId}`);
         break;
 
@@ -155,10 +159,10 @@ wss.on('connection', (ws) => {
         // Проверяем наличие targetId в Map
         const targetWs = clients.get(data.targetId);
         if (targetWs) {
-          console.log(`Initiating call from ${ws.clientId} to ${data.targetId}`);
           targetWs.send(JSON.stringify({
             type: 'initiate', from: ws.clientId,
           }));
+          console.log(`Initiate:  ${data.fromId} is calling ${data.targetId}`);
         } else {
           console.error(`Target client ${data.targetId} not found`);
           ws.send(JSON.stringify({
@@ -197,6 +201,10 @@ wss.on('connection', (ws) => {
         }
         break;
 
+      case 'imAlive':
+        timerConfirmAlive = null; // отключаем таймер удаления абонента из clients Map(), т.к. он подтвердил ,что он "живой" и, видимо просто перегружался
+        break;
+
       default:
         console.error(`Unknown message type: ${data.type}`);
         ws.send(JSON.stringify({
@@ -205,19 +213,29 @@ wss.on('connection', (ws) => {
     }
   });
 
+
   ws.on('close', () => {
-    // Удаляем клиента из Map при отключении
+    // Удаляем клиента из Map при отключении, но ставим таймер на случай, если кандидат просто перегрузился (т.е. только временно вышел из WS)
     if (ws.clientId) {
-      clients.delete(ws.clientId);
-      console.log(`Client disconnected: ${ws.clientId}`);
+      timerConfirmAlive = setTimeout(() => {
+        clients.delete(ws.clientId);
+        console.log(`Client deleted: ${ws.clientId}`);
+        ws.clientId = null;
+      }, aliveTimeout); // если после этого времени не пришел ответ что "imAlive" - удаляем из Map() подключённых участников
+
+      console.log(`Client disconnected: ${ws.clientId}.  Server will now check it client alive or permanently disconnected`);
+
+      timerRequestAlive = setTimeout(() => {
+        ws.send(JSON.stringify({type: 'checkAlive'}))
+      }, requestTimeout); //даём время на перезагрузку клиента, потом запрашиваем жив ли он
     }
   });
 });
 
 
-const Turn = require('node-turn'); // Этот TURN сервер не используется (юзаю внешний), тут код -для примера
+/*const Turn = require('node-turn'); // Этот TURN сервер не используется (юзаю внешний), тут код -для примера
 const turnServer = new Turn({
-  listeningPort: 3478,
+  Port: 3478,
   listeningIps: ['192.168.88.242'],
   externalIps: ['195.3.129.213'],  // к сожалению, так не работает и клиенты не могут "извне" достучаться до этого IP, использую внешний TURN- сервер
   allocationLifetime: 600, // Lifetime in seconds
@@ -235,5 +253,4 @@ const turnServer = new Turn({
   maxPort: 65535,
 });
 
-
-turnServer.start();
+turnServer.start();*/

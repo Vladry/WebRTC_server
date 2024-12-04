@@ -2,7 +2,7 @@
 const Turn = require('node-turn');
 
 const turnServer = new Turn({
-    listeningPort: 3478,
+    Port: 3478,
     // Попробуйте указать `0.0.0.0` для привязки ко всем интерфейсам
     listeningIps: ['0.0.0.0'],
     realm: 'myrealm',

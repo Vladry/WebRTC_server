@@ -16,8 +16,11 @@
         }
 
         #remoteVideo {
-            width: 100%;
-            height: auto;
+            width: 60%;
+            /*height: auto;*/
+            aspect-ratio: 4 / 3;
+            display: block;
+            margin: 10px auto;
         }
     </style>
     <meta content="yes" name="mobile-web-app-capable"/>
@@ -25,7 +28,7 @@
 </head>
 <body>
 <div>
-    <video id="localVideo" autoplay muted playsinline></video>
+    <video id="localVideo" autoplay muted playsinline width="1000"></video>
     <video id="remoteVideo" autoplay muted playsinline></video>
     <a href="https://195.3.129.213:3003/"> на главную homepage  (для HTTPS)</a>
 </div>
@@ -57,9 +60,9 @@ const configuration = {
 
 
 
-    const clientId = 'client2'; // Уникальный идентификатор клиента
-    const targetId = 'client1'; // Идентификатор целевого клиента
+    const clientId = 'NoName'; // Уникальный идентификатор клиента
+    const targetId = 'Vlad'; // Идентификатор целевого клиента
 </script>
-<script src="../java_scripts/client_script.js"></script>
+<script src="../java_scripts/client.js"></script>
 </body>
 </html>
