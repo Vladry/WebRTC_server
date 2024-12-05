@@ -27,10 +27,26 @@
 <!--    <link href="icon.png" rel="icon" sizes="192x192"/>-->
 </head>
 <body>
-<div>
+<div style="display:flex; flex-direction: column; margin: 20px auto 20px;">
     <video id="localVideo" autoplay muted playsinline></video>
     <video id="remoteVideo" autoplay muted playsinline></video>
-    <a href="https://195.3.129.213:3003/"> на главную homepage  (для HTTPS)</a>
+    <label for="selectUser" style="align-self: center;">Ты кто?
+        <select id="selectUser" style="align-self: center; margin: 2px; padding: 2px 10px; ">
+            <option value= false>---</option>
+            <option value="Vlad">Vlad</option>
+            <option value="Mary">Mary</option>
+        </select>
+    </label>
+    <label for="selectTarget" style="align-self: center">Кому звоним?
+        <select id="selectTarget" style="align-self: center; margin: 2px; padding: 2px 10px; ">
+            <option value= false>---</option>
+            <option value="Vlad">Vlad</option>
+            <option value="Mary">Mary</option>
+        </select>
+    </label>
+
+    <button id="btn" style="align-self: center; margin: 2px; padding: 2px 15px; width: auto;">Call</button>
+    <a href="https://195.3.129.213:3003/">на главную</a>
 </div>
 
 <script>
@@ -46,22 +62,6 @@
         iceTransportPolicy: 'relay' // Использовать только TURN-кандидаты
     };
 
-
-/*    const configuration = {
-        iceServers: [
-            {
-                // urls: 'turn:195.3.129.213:3478', // URL вашего TURN-сервера
-                urls: 'turn:195.3.129.213:3478', // URL вашего TURN-сервера
-                username: 'user1',
-                credential: 'password1'
-            }
-        ],
-        iceTransportPolicy: 'relay' // Использовать только TURN-кандидаты
-    };*/
-
-
-        const clientId = 'Vlad'; // Уникальный идентификатор клиента
-        const targetId = 'NoName'; // Идентификатор целевого клиента
 </script>
 <script src="../java_scripts/client.js"></script>
 </body>

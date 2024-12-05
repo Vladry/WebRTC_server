@@ -1,10 +1,33 @@
 // Подключение к WebSocket-серверу
 const websocket = new WebSocket('wss://195.3.129.213:3003'); // Используйте wss для HTTPS
+let clientId = null;
+let targetId = null;
 const remoteVideoEl = document.getElementById('remoteVideo');
+const selectUserEl = document.getElementById('selectUser');
+selectUserEl.addEventListener('change', () => {
+    selectUserEl.disabled = true;
+    clientId = selectUserEl.value;
+    register(clientId);
+});
+const selectTargetEl = document.getElementById('selectTarget');
+selectTargetEl.addEventListener('change', () => {
+    targetId = selectTargetEl.value;
+    btnEl.value = `Звоним ${selectTargetEl.value} ?`;
+});
+const btnEl = document.getElementById('btn');
+btnEl.addEventListener('click', () => initiate(clientId, targetId));
+let peerConnection = null;
 
 websocket.onopen = () => {
     // console.log('WebSocket connected');
+    //  тут выполняем любой код, который хотим выполнить при загрузке страницы
+};
 
+const register = (clientId) => {
+    console.log("register->");
+    if (clientId === "false") {
+        return;
+    } else
     // Регистрация клиента на сервере
     websocket.send(JSON.stringify({
         type: 'register',
@@ -12,6 +35,12 @@ websocket.onopen = () => {
     }));
     console.log(`Sent registration: clientId = ${clientId}`);
 
+    peersHandler();
+    handlerLocalCamera();
+};
+
+const initiate = (clientId, targetId) => {
+    console.log("initiate->");
     // После регистрации можно инициализировать вызов (по UI или заранее определённому targetId)
     websocket.send(JSON.stringify({
         type: 'initiate',
@@ -19,7 +48,7 @@ websocket.onopen = () => {
         fromId: clientId,
     }));
     console.log(`Initiate:  ${clientId} is calling ${targetId}`);
-};
+}
 
 
 websocket.onmessage = async (message) => {
@@ -88,32 +117,33 @@ websocket.onmessage = async (message) => {
 };
 
 
-
-
+const peersHandler = () => {
 // Создание RTCPeerConnection
-const peerConnection = new RTCPeerConnection(configuration);
-console.log("peerConnection: ", peerConnection);
-peerConnection.oniceconnectionstatechange = () => {  // Логгирование ICE-событий
-    console.log('ICE connection state: ', peerConnection.iceConnectionState);
-};
+    peerConnection = new RTCPeerConnection(configuration);
+    console.log("peerConnection: ", peerConnection);
+    peerConnection.oniceconnectionstatechange = () => {  // Логгирование ICE-событий
+        console.log('ICE connection state: ', peerConnection.iceConnectionState);
+    };
 
 
-peerConnection.onicecandidate = (event) => {  // Отправка кандидатов
-    if (event.candidate) {
-        console.log('Sending candidate: ', event.candidate);
-        websocket.send(JSON.stringify({
-            type: 'candidate',
-            candidate: event.candidate,
-            targetId: targetId, // Отправляем ICE-кандидата конкретному клиенту
-        }));
-        console.log('ICE candidate sent');
-    }
-};
+    peerConnection.onicecandidate = (event) => {  // Отправка кандидатов
+        if (event.candidate) {
+            console.log('Sending candidate: ', event.candidate);
+            websocket.send(JSON.stringify({
+                type: 'candidate',
+                candidate: event.candidate,
+                targetId: targetId, // Отправляем ICE-кандидата конкретному клиенту
+            }));
+            console.log('ICE candidate sent');
+        }
+    };
 
-peerConnection.ontrack = (event) => {
-    remoteVideoEl.srcObject = event.streams[0];
-    console.log('Remote video stream set:', event.streams[0]);
-};
+    peerConnection.ontrack = (event) => {
+        remoteVideoEl.srcObject = event.streams[0];
+        console.log('Remote video stream set:', event.streams[0]);
+    };
+}
+
 
 remoteVideoEl.onLoadeddata = () => {
     // запустить после добавления потока (т.к. автоплей не срабатывал на Андроиде, а на айфоне срабатывал)
@@ -122,16 +152,15 @@ remoteVideoEl.onLoadeddata = () => {
     });
 }
 
-
-// Захват видео с локальной камеры
-// navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-navigator.mediaDevices.getUserMedia({ video: true, audio: {echoCancellation: true,} }).then((stream) => {
-    const localVideoEl = document.getElementById('localVideo');
-    localVideoEl.srcObject = stream;
-    stream.getTracks().forEach((track) => {
-        peerConnection.addTrack(track, stream);
+const handlerLocalCamera = () => { // Захват видео с локальной камеры
+    navigator.mediaDevices.getUserMedia({video: true, audio: {echoCancellation: true,}}).then((stream) => {
+        const localVideoEl = document.getElementById('localVideo');
+        localVideoEl.srcObject = stream;
+        stream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, stream);
+        });
+        console.log('Local stream added to PeerConnection');
+    }).catch((error) => {
+        console.error('Error accessing media devices:', error);
     });
-     console.log('Local stream added to PeerConnection');
-}).catch((error) => {
-    console.error('Error accessing media devices:', error);
-});
+}
