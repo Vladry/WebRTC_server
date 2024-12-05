@@ -2,53 +2,98 @@
 const websocket = new WebSocket('wss://195.3.129.213:3003'); // Используйте wss для HTTPS
 let clientId = null;
 let targetId = null;
+
+let peerConnection = new RTCPeerConnection(configuration);
 const remoteVideoEl = document.getElementById('remoteVideo');
-const selectUserEl = document.getElementById('selectUser');
-selectUserEl.addEventListener('change', () => {
-    selectUserEl.disabled = true;
-    clientId = selectUserEl.value;
+
+const selectClientEl = document.getElementById('selectUser');
+const events = ['change', 'dblclick'];
+const handlerSelectClient = () => {
+    selectClientEl.disabled = true;
+    clientId = selectClientEl.value;
+    localStorage.setItem('clientId', selectClientEl.value);
     register(clientId);
-});
+}
+events.forEach(e => selectClientEl.addEventListener(e, handlerSelectClient));
+
+
+const btnEl = document.getElementById('btn');
+btnEl.addEventListener('click', () => initiate(clientId, targetId));
+
 const selectTargetEl = document.getElementById('selectTarget');
 selectTargetEl.addEventListener('change', () => {
     targetId = selectTargetEl.value;
-    btnEl.value = `Звоним ${selectTargetEl.value} ?`;
+    localStorage.setItem('targetId', selectTargetEl.value);
+    btnEl.innerText = `Звоним ${selectTargetEl.value} ?`;
 });
-const btnEl = document.getElementById('btn');
-btnEl.addEventListener('click', () => initiate(clientId, targetId));
-let peerConnection = null;
+
+
+const initialize = () => {
+    if (localStorage.getItem('clientId')) {
+        clientId = localStorage.getItem('clientId');
+        selectClientEl.value = clientId;
+        register(clientId);
+
+    }
+
+    if (localStorage.getItem('targetId')) {
+        targetId = localStorage.getItem('targetId');
+        selectTargetEl.value = localStorage.getItem('targetId');
+        btnEl.innerText = `Звоним ${targetId} ?`;
+    }
+}
+
+initialize();
+
+
 
 websocket.onopen = () => {
     // console.log('WebSocket connected');
     //  тут выполняем любой код, который хотим выполнить при загрузке страницы
 };
 
-const register = (clientId) => {
+
+function register(clientId) {
+
     console.log("register->");
-    if (clientId === "false") {
+    if (clientId === "false" || clientId === null || clientId === undefined) {
         return;
-    } else
-    // Регистрация клиента на сервере
-    websocket.send(JSON.stringify({
-        type: 'register',
-        clientId: clientId,
-    }));
-    console.log(`Sent registration: clientId = ${clientId}`);
+    }
+    const sendRegistration = () => {
+        // Регистрация клиента на сервере
+        websocket.send(JSON.stringify({
+            type: 'register',
+            clientId: clientId,
+        }));
+        console.log(`Sent registration: clientId = ${clientId}`);
+    }
+
+
+    if (websocket.readyState === websocket.OPEN) {
+        sendRegistration();
+    } else {
+        console.log("WebSocket not ready. Waiting to send registration...");
+        websocket.addEventListener('open', () => {
+            sendRegistration()
+        }, {once: true}); // Событие обработается только один раз
+    }
 
     peersHandler();
-    handlerLocalCamera();
-};
+}
+
+
 
 const initiate = (clientId, targetId) => {
-    console.log("initiate->");
     // После регистрации можно инициализировать вызов (по UI или заранее определённому targetId)
     websocket.send(JSON.stringify({
         type: 'initiate',
         targetId: targetId, // Запрос на установление соединения с targetId
         fromId: clientId,
     }));
-    console.log(`Initiate:  ${clientId} is calling ${targetId}`);
+    console.log(`Initiate->  ${clientId} is calling ${targetId}`);
 }
+
+
 
 
 websocket.onmessage = async (message) => {
@@ -57,7 +102,7 @@ websocket.onmessage = async (message) => {
 
     switch (data.type) {
         case 'initiate':
-            if (data.from === targetId) {
+            // if (data.from === targetId) {
                 console.log('Call initiated by: ', data.from);
 
                 // Создаем предложение (offer)
@@ -70,7 +115,7 @@ websocket.onmessage = async (message) => {
                     targetId: data.from,
                     sdp: peerConnection.localDescription,
                 }));
-            }
+            // }
             break;
 
         case 'offer':
@@ -117,9 +162,9 @@ websocket.onmessage = async (message) => {
 };
 
 
-const peersHandler = () => {
+function peersHandler (){
 // Создание RTCPeerConnection
-    peerConnection = new RTCPeerConnection(configuration);
+
     console.log("peerConnection: ", peerConnection);
     peerConnection.oniceconnectionstatechange = () => {  // Логгирование ICE-событий
         console.log('ICE connection state: ', peerConnection.iceConnectionState);
@@ -142,6 +187,9 @@ const peersHandler = () => {
         remoteVideoEl.srcObject = event.streams[0];
         console.log('Remote video stream set:', event.streams[0]);
     };
+
+
+    handlerLocalCamera();
 }
 
 
@@ -152,7 +200,9 @@ remoteVideoEl.onLoadeddata = () => {
     });
 }
 
-const handlerLocalCamera = () => { // Захват видео с локальной камеры
+
+
+function handlerLocalCamera (){ // Захват видео с локальной камеры
     navigator.mediaDevices.getUserMedia({video: true, audio: {echoCancellation: true,}}).then((stream) => {
         const localVideoEl = document.getElementById('localVideo');
         localVideoEl.srcObject = stream;
@@ -162,5 +212,5 @@ const handlerLocalCamera = () => { // Захват видео с локальн�
         console.log('Local stream added to PeerConnection');
     }).catch((error) => {
         console.error('Error accessing media devices:', error);
-    });
+    })
 }

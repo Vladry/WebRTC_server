@@ -7,7 +7,7 @@
     <title>USB Camera Stream with Dashboard</title>
     <style>
         #localVideo {
-            position: absolute;
+            align-self: flex-end;
             width: 200px;
             height: auto;
             bottom: 10px;
@@ -16,6 +16,7 @@
         }
 
         #remoteVideo {
+            align-self: flex-end;
             width: 60%;
             /*height: auto;*/
             aspect-ratio: 4 / 3;
@@ -28,26 +29,29 @@
 <!--    <link href="../images/icons/icon.png" rel="icon" sizes="192x192"/>-->
 </head>
 <body>
-<div style="display:flex; flex-direction: column; margin: 20px auto 20px;">
-    <video id="localVideo" autoplay muted playsinline></video>
+<a href="https://195.3.129.213:3003/">на главную</a>
+<div style="display:flex; flex-direction: row; margin: 10px">
     <video id="remoteVideo" autoplay muted playsinline></video>
+    <div style="align-self: center; display:flex; flex-direction: column; margin: 10px;">
     <label for="selectUser" style="align-self: center;">Ты кто?
         <select id="selectUser" style="align-self: center; margin: 2px; padding: 2px 10px; ">
-            <option value= false>---</option>
+            <option value=false>---</option>
             <option value="Vlad">Vlad</option>
             <option value="Mary">Mary</option>
         </select>
     </label>
     <label for="selectTarget" style="align-self: center">Кому звоним?
         <select id="selectTarget" style="align-self: center; margin: 2px; padding: 2px 10px; ">
-            <option value= false>---</option>
+            <option value=false>---</option>
             <option value="Vlad">Vlad</option>
             <option value="Mary">Mary</option>
         </select>
     </label>
+        <button id="btn" style="align-self: center; margin: 2px; padding: 2px 15px; width: auto;">Call</button>
+        <video id="localVideo" autoplay muted playsinline></video>
+    </div>
 
-    <button id="btn" style="align-self: center; margin: 2px; padding: 2px 15px; width: auto;">Call</button>
-    <a href="https://195.3.129.213:3003/">на главную</a>
+
 </div>
 
 <script>

@@ -9,7 +9,7 @@ const wss = new WebSocket.Server({server});
 const clients = new Map(); // Используем Map для хранения объектов ws всех клиентов с их Id в поле ws.clientId
 
 wss.on('connection', (ws) => {
-    console.log('New client connected');
+    console.log('WSS created');
     let timerConfirmAlive = null;
     let timerRequestAlive = null;
     let requestTimeout = 10000;
@@ -89,6 +89,7 @@ wss.on('connection', (ws) => {
 
 
     ws.on('close', () => {
+        console.log("client disconnected and his WSS descroyed. But we'll try to keep it")
         // Удаляем клиента из Map при отключении, но ставим таймер на случай, если кандидат просто перегрузился (т.е. только временно вышел из WS)
         if (ws.clientId) {
             timerConfirmAlive = setTimeout(() => {
@@ -97,7 +98,7 @@ wss.on('connection', (ws) => {
                 ws.clientId = null;
             }, aliveTimeout); // если после этого времени не пришел ответ что "imAlive" - удаляем из Map() подключённых участников
 
-            console.log(`Client disconnected: ${ws.clientId}.  Server will now check it client alive or permanently disconnected`);
+            console.log(`Client disconnected.  Server will now check if client alive or permanently disconnected`);
 
             timerRequestAlive = setTimeout(() => {
                 ws.send(JSON.stringify({type: 'checkAlive'}))
