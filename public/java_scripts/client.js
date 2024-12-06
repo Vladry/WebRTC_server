@@ -9,7 +9,7 @@ const remoteVideoEl = document.getElementById('remoteVideo');
 const selectClientEl = document.getElementById('selectUser');
 const events = ['change', 'dblclick'];
 const handlerSelectClient = () => {
-    selectClientEl.disabled = true;
+    // selectClientEl.disabled = true;
     clientId = selectClientEl.value;
     localStorage.setItem('clientId', selectClientEl.value);
     register(clientId);
@@ -55,7 +55,7 @@ websocket.onopen = () => {
 
 function register(clientId) {
 
-    console.log("register->");
+    console.log("register->   ", clientId);
     if (clientId === "false" || clientId === null || clientId === undefined) {
         return;
     }
@@ -65,7 +65,7 @@ function register(clientId) {
             type: 'register',
             clientId: clientId,
         }));
-        console.log(`Sent registration: clientId = ${clientId}`);
+        console.log(`ws.send registration: clientId = ${clientId}`);
     }
 
 
@@ -203,13 +203,14 @@ remoteVideoEl.onLoadeddata = () => {
 
 
 function handlerLocalCamera (){ // Захват видео с локальной камеры
+    console.log("handleLocalCamera-> ")
     navigator.mediaDevices.getUserMedia({video: true, audio: {echoCancellation: true,}}).then((stream) => {
         const localVideoEl = document.getElementById('localVideo');
         localVideoEl.srcObject = stream;
         stream.getTracks().forEach((track) => {
             peerConnection.addTrack(track, stream);
         });
-        console.log('Local stream added to PeerConnection');
+        console.log('Local stream added to PeerConnection:  ', stream);
     }).catch((error) => {
         console.error('Error accessing media devices:', error);
     })

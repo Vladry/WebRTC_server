@@ -23,10 +23,17 @@ wss.on('connection', (ws) => {
 
         switch (data.type) {
             case 'register':
-
+                if (clients.get(ws.clientId)) {
+                    clients.delete(ws.clientId);
+                }
                 ws.clientId = data.clientId;     // Сохраняем clientId в объекте WebSocket для последующей отправки собеседникам всего объекта WebSocket уже с Id данного клиента
                 clients.set(data.clientId, ws);  //в Map, по ключу клиентского Id размещаем этот объект ws, который потом перешлём собеседнику для создания связи
                 console.log(`Client registered: ${data.clientId}`);
+
+                for (let [key, value] of clients.entries()) {
+                    console.log('clients: ', key);
+                }
+
                 break;
 
             case 'initiate':
@@ -90,20 +97,45 @@ wss.on('connection', (ws) => {
 
     ws.on('close', () => {
         console.log("client disconnected and his WSS descroyed. But we'll try to keep it")
-        // Удаляем клиента из Map при отключении, но ставим таймер на случай, если кандидат просто перегрузился (т.е. только временно вышел из WS)
         if (ws.clientId) {
-            timerConfirmAlive = setTimeout(() => {
-                clients.delete(ws.clientId);
-                console.log(`Client deleted: ${ws.clientId}`);
-                ws.clientId = null;
-            }, aliveTimeout); // если после этого времени не пришел ответ что "imAlive" - удаляем из Map() подключённых участников
-
-            console.log(`Client disconnected.  Server will now check if client alive or permanently disconnected`);
-
-            timerRequestAlive = setTimeout(() => {
-                ws.send(JSON.stringify({type: 'checkAlive'}))
-            }, requestTimeout); //даём время на перезагрузку клиента, потом запрашиваем жив ли он
+            clients.delete(ws.clientId);
+            console.log("clients: ");
+            clients.forEach((value, key)=> console.log(key));
         }
+
+
+        /*          // Удаляем клиента из Map при отключении, но ставим таймер на случай, если кандидат просто перегрузился (т.е. только временно вышел из WS)
+                if (ws.clientId) {
+                    timerConfirmAlive = setTimeout(() => {
+                        clients.delete(ws.clientId);
+                        console.log(`Client deleted: ${ws.clientId}`);
+                        ws.clientId = null;
+                    }, aliveTimeout); // если после этого времени не пришел ответ что "imAlive" - удаляем из Map() подключённых участников
+
+                    console.log(`Client disconnected.  Server will now check if client alive or permanently disconnected`);
+
+                    timerRequestAlive = setTimeout(() => {
+                        ws.send(JSON.stringify({type: 'checkAlive'}))
+                    }, requestTimeout); //даём время на перезагрузку клиента, потом запрашиваем жив ли он
+                }
+
+
+
+                if (ws.clientId) {
+                    timerConfirmAlive = setTimeout(() => {
+                        clients.delete(ws.clientId);
+                        console.log(`Client deleted: ${ws.clientId}`);
+                        ws.clientId = null;
+                    }, aliveTimeout); // если после этого времени не пришел ответ что "imAlive" - удаляем из Map() подключённых участников
+
+                    console.log(`Client disconnected.  Server will now check if client alive or permanently disconnected`);
+
+                    timerRequestAlive = setTimeout(() => {
+                        ws.send(JSON.stringify({type: 'checkAlive'}))
+                    }, requestTimeout); //даём время на перезагрузку клиента, потом запрашиваем жив ли он
+                }
+         */
+
     });
 });
 
