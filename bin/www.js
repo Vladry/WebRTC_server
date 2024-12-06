@@ -3,12 +3,12 @@
  * Module dependencies.
  */
 
-const app = require('../app');
+const app = require('../app').app;
 const debug = require('debug')('webrtc-server:server');
-const http = require('http');
+// const http = require('http');
 const locations =require( '../locations.json');
 require('dotenv').config({path: `${locations.env}`});
-const WebSocket = require('ws');
+
 
 /**
  * Готовим переменные под сертификат для https
@@ -58,7 +58,6 @@ const server = https.createServer(credentials, app); // это создание 
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 server.listen(port, '0.0.0.0', () => {
   // console.log(` on port ${port}`);
   server.on('error', onError);

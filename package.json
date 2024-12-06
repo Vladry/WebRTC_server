@@ -6,19 +6,24 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "cookie": "^1.0.2",
     "cookie-parser": "^1.4.7",
     "debug": "^4.3.7",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "express-session": "^1.18.1",
     "fs": "^0.0.1-security",
     "http-errors": "^2.0.0",
     "https": "^1.0.0",
+    "memorystore": "^1.6.7",
     "morgan": "^1.10.0",
     "node-turn": "^0.0.6",
     "pug": "^3.0.3",
     "sass": "^1.81.0",
     "sass-middleware": "^0.0.3",
+    "uuid": "^8.3.2",
     "webrtc": "^1.14.1",
+    "webrtc-adapter": "^9.0.1",
     "ws": "^8.18.0"
   }
 }
