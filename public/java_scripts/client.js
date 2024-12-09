@@ -63,7 +63,7 @@ function register(clientId) {
         // Регистрация клиента на сервере
         websocket.send(JSON.stringify({
             type: 'register',
-            clientId: clientId,
+            userName: clientId,
         }));
         console.log(`ws.send registration: clientId = ${clientId}`);
     }

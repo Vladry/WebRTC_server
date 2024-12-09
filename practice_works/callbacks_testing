@@ -1,0 +1,23 @@
+
+
+myArray = [1,2,3,4]
+function transformArray(arr, callback){
+const res = []
+    for (let i = 0; i < arr.length; i++) {
+        res.push(callback(arr[i]));
+    }
+    return res;
+}
+const cb = (val)=> val * 2;
+console.log(transformArray(myArray, cb))
+
+
+
+function ret (arr, cb) {
+    return cb(arr)
+}
+const cb2 = (arr)=> arr;
+console.log(ret(myArray, cb2))
+
+
+

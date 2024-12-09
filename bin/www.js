@@ -127,6 +127,6 @@ server.listen(port, '0.0.0.0', () => {
 
 
 // Подключаем WebSocket и передаём в него сервер
-require('./websocket.js')(server);
+require('./handleUpgradeToWS.js')(server);
 // вызываем модуль turnServer-a
 // require('./turn_server.js')();
