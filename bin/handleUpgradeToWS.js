@@ -25,46 +25,39 @@ function handleUpgradeRequest(request, socket, head, wss, sessionStore) {
     }
 
 
-    // Получаем сессию по sessionId
-    // const session = getSessionById(sessionId, sessionStore);
 
-    const session = getSessionAsync(sessionId, sessionStore);
+    getSession(sessionId, sessionStore)
+        .then(session => {
+            console.log("Session is ready:", session);
+            handleWebSocketConnection(request, socket, head, wss, session);
+        })
+        .catch(error => {
+            console.error("Failed to get session:", error);
+        });
 
 
-    async function getSessionById(sessionId, sessionStore) {
-        console.log('-> getSessionById');
+
+    async function getSession(sessionId, sessionStore) {
+        console.log('-> getSession');
         return new Promise((resolve, reject) => {
-            sessionStore.get(sessionId, async (err, session) => {
+            sessionStore.get(sessionId, (err, session) => {
                 if (err) {
-                    reject(null);
-                } else if (!session) {
-                    try {
-                        session = await createNewSession(sessionId, sessionStore);
-                        resolve(session);
-                    } catch (creationError) {
-                        reject(creationError);
-                    }
-                } else {
-                    resolve(session);
+                    console.error("Error retrieving session:", err);
+                    return reject(err);
                 }
+                if (!session) {
+                    console.log("No session found, creating a new one");
+                    const newSession = createNewSession(sessionId, sessionStore);
+                    return resolve(newSession);
+                }
+                console.log("Session retrieved:", session);
+                resolve(session);
             });
         });
     }
 
-    async function getSessionAsync(sessionId, sessionStore) {
-        try {
-            const session = await getSessionById(sessionId, sessionStore);
-            return session;
-        } catch (e) {
-            console.log('error in getSessionAsync: ', e);
-            return null; // Возвращаем null или обрабатываем ошибку
-        }
-    }
 
 
-    if (session) {
-        handleWebSocketConnection(request, socket, head, wss, session);
-    }
 
 }
 
