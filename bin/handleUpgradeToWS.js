@@ -24,71 +24,76 @@ function handleUpgradeRequest(request, socket, head, wss, sessionStore) {
         return;
     }
 
-    function cbSessionStore(err, session) {
-        let newSession = null;
-        if (err) {
-            // sendBadRequest(socket, 'Invalid session'); // это на случай, если при отсутствии сессии мы посылаем фронт нафиг
-            console.log("cbSessionStore-> err retrieving session from sessionStore")
-            return null;
-        }
-        console.log("Session from cbSessionStore:", session);
-        newSession = createNewSession(sessionId, sessionStore); //если не найдена сессия, то создаём ее без логина, для любого юзера
-        console.log("there was no session in sessionStore-> created session: ", newSession)
-        return newSession;
-    }
 
     // Получаем сессию по sessionId
-    const session = getSessionById(sessionId, sessionStore, cbSessionStore);
+    // const session = getSessionById(sessionId, sessionStore);
+
+    const session = getSessionAsync(sessionId, sessionStore);
 
 
-    function getSessionById(sessionId, sessionStore, cb) {
-        let _session;
+    async function getSessionById(sessionId, sessionStore) {
         console.log('-> getSessionById');
-        sessionStore.get(sessionId, (err, session) => {
-            if (err) {
-                console.log('Error retrieving session:', err);
-                _session = cb(err, null); // Возвращаем ошибку через коллбэк
-                return _session;
-            } else if (!session) {
-                console.log('retrieved an EMPTY session:', session);
-                _session = (cb(null, null)); // Задаем в колбэк пустое, а получаем - новую сессию
-                return _session;
-            }
-            console.log('Session retrieved:', session);
-            _session = (cb(null, session)); // Возвращаем найденную сессию через коллбэк
-            return _session;
-
+        return new Promise((resolve, reject) => {
+            sessionStore.get(sessionId, async (err, session) => {
+                if (err) {
+                    reject(null);
+                } else if (!session) {
+                    try {
+                        session = await createNewSession(sessionId, sessionStore);
+                        resolve(session);
+                    } catch (creationError) {
+                        reject(creationError);
+                    }
+                } else {
+                    resolve(session);
+                }
+            });
         });
-        return _session;
+    }
+
+    async function getSessionAsync(sessionId, sessionStore) {
+        try {
+            const session = await getSessionById(sessionId, sessionStore);
+            return session;
+        } catch (e) {
+            console.log('error in getSessionAsync: ', e);
+            return null; // Возвращаем null или обрабатываем ошибку
+        }
     }
 
 
-    handleWebSocketConnection(request, socket, head, wss, session);
+    if (session) {
+        handleWebSocketConnection(request, socket, head, wss, session);
+    }
 
 }
 
 
-function createNewSession(sessionId, sessionStore) {
+async function createNewSession(sessionId, sessionStore) {
     const newSession = {
         clientId: uuidv4(),
-        lastUserName: null,  // потом вставим сюда полученный с фронта имя пользователя
+        lastUserName: null,  // Потом вставим сюда полученное с фронта имя пользователя
         lastActivity: Date.now(),
-    }
-    sessionStore.set(sessionId, newSession, (setErr) => {
-        if (setErr) {
-            console.error('Error saving session:', err);
-            return undefined;
-        }
+    };
+
+    return new Promise((resolve, reject) => {
+        sessionStore.set(sessionId, newSession, (setErr) => {
+            if (setErr) {
+                console.error('Error saving session:', setErr);
+                reject(setErr);
+            } else {
+                resolve(newSession);
+            }
+        });
     });
-    return newSession;
 }
+
 
 // Функция извлечения sessionId из cookies
 function getSessionIdFromRequest(request) {
     const cookies = parse(request.headers.cookie || '');
     return cookies['connect.sid']?.split('.')[0]; // Извлекаем sessionId
 }
-
 // Функция отправки ошибки 400
 function sendBadRequest(socket, message) {
     socket.write(`HTTP/1.1 400 Bad Request\r\n\r\n${message}\r\n`);
