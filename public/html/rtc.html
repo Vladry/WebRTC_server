@@ -5,49 +5,31 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>USB Camera Stream with Dashboard</title>
-    <style>
-        #localVideo {
-            align-self: flex-end;
-            width: 200px;
-            height: auto;
-            bottom: 10px;
-            right: 10px;
-            border: 2px solid white;
-        }
-
-        #remoteVideo {
-            align-self: flex-end;
-            width: 60%;
-            /*height: auto;*/
-            aspect-ratio: 4 / 3;
-            display: block;
-            margin: 10px auto;
-        }
-    </style>
+    <link rel="stylesheet" href="../stylesheets/reset.css"/>
+    <link rel="stylesheet" href="../stylesheets/style.css"/>
     <meta content="yes" name="mobile-web-app-capable"/>
-    <link href="../images/icons/favicon.ico" rel="icon" sizes="192x192"/>
-<!--    <link href="../images/icons/icon.png" rel="icon" sizes="192x192"/>-->
+    <link rel="icon" href="../images/icons/favicon.ico" sizes="192x192"/>
 </head>
 <body>
 <a href="https://195.3.129.213:3003/">на главную</a>
-<div style="display:flex; flex-direction: row; margin: 10px">
+<div class="container">
     <video id="remoteVideo" autoplay muted playsinline></video>
     <div style="align-self: center; display:flex; flex-direction: column; margin: 10px;">
-    <label for="selectUser" style="align-self: center;">Ты кто?
-        <select id="selectUser" style="align-self: center; margin: 2px; padding: 2px 10px; ">
-            <option value=false>---</option>
-            <option value="Vlad">Vlad</option>
-            <option value="Mary">Mary</option>
-        </select>
-    </label>
-    <label for="selectTarget" style="align-self: center">Кому звоним?
-        <select id="selectTarget" style="align-self: center; margin: 2px; padding: 2px 10px; ">
-            <option value=false>---</option>
-            <option value="Vlad">Vlad</option>
-            <option value="Mary">Mary</option>
-        </select>
-    </label>
-        <button id="btn" style="align-self: center; margin: 2px; padding: 2px 15px; width: auto;">Call</button>
+        <label for="selectUser">Ты кто?
+            <select id="selectUser">
+                <option value=false>---</option>
+                <option value="Vlad">Vlad</option>
+                <option value="Mary">Mary</option>
+            </select>
+        </label>
+        <label for="selectTarget">Кому звоним?
+            <select id="selectTarget">
+                <option value=false>---</option>
+                <option value="Vlad">Vlad</option>
+                <option value="Mary">Mary</option>
+            </select>
+        </label>
+        <button id="btn">Call</button>
         <video id="localVideo" autoplay muted playsinline></video>
     </div>
 
