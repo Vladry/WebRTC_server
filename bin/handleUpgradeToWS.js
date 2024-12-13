@@ -11,7 +11,7 @@ module.exports = (server) => {
     server.on('upgrade', (request, socket, head) => {
         handleUpgradeRequest(request, socket, head, wss, sessionStore);
     });
-    // console.log('WebSocket server is running.');
+    // WebSocket server is running
 };
 
 
@@ -28,7 +28,8 @@ function handleUpgradeRequest(request, socket, head, wss, sessionStore) {
 
     getSession(sessionId, sessionStore)
         .then(session => {
-            console.log("Session is ready:", session);
+            // console.log("sessionId: ", sessionId)
+            // console.log("Session is ready:", session);
             handleWebSocketConnection(request, socket, head, wss, session);
         })
         .catch(error => {
@@ -38,7 +39,7 @@ function handleUpgradeRequest(request, socket, head, wss, sessionStore) {
 
 
     async function getSession(sessionId, sessionStore) {
-        console.log('-> getSession');
+        // console.log('-> getSession');
         return new Promise((resolve, reject) => {
             sessionStore.get(sessionId, (err, session) => {
                 if (err) {
@@ -50,7 +51,7 @@ function handleUpgradeRequest(request, socket, head, wss, sessionStore) {
                     const newSession = createNewSession(sessionId, sessionStore);
                     return resolve(newSession);
                 }
-                console.log("Session retrieved:", session);
+                // console.log("Session retrieved!");
                 resolve(session);
             });
         });
@@ -65,7 +66,7 @@ function handleUpgradeRequest(request, socket, head, wss, sessionStore) {
 async function createNewSession(sessionId, sessionStore) {
     const newSession = {
         clientId: uuidv4(),
-        lastUserName: null,  // Потом вставим сюда полученное с фронта имя пользователя
+        userName: null,  // Потом вставим сюда полученное с фронта имя пользователя
         lastActivity: Date.now(),
     };
 

@@ -14,6 +14,17 @@ const handlerSelectClient = () => {
     localStorage.setItem('clientId', selectClientEl.value);
     register(clientId);
 }
+
+function setUniqueName(uniqueName){  //когда с сервера прилетает взамен неуникальному cliendId скорректированное уникальное- устанавливаем его на клиенте
+    clientId = uniqueName;
+    selectClientEl.value = uniqueName;
+    localStorage.set('clientId', uniqueName)
+    const container = document.querySelector('.container');
+    const uniqueNameWarningEl = document.createElement('p')
+    uniqueNameWarningEl.textContent = `Ваше уникальное имя в системе: ${uniqueName}`
+    container.appendChild(uniqueNameWarningEl);
+}
+
 events.forEach(e => selectClientEl.addEventListener(e, handlerSelectClient));
 
 
@@ -98,9 +109,9 @@ const initiate = (clientId, targetId) => {
 
 websocket.onmessage = async (message) => {
     const data = JSON.parse(message.data);
-    // console.log('WebSocket message received: ', data);
 
     switch (data.type) {
+
         case 'initiate':
             // if (data.from === targetId) {
                 console.log('Call initiated by: ', data.from);
@@ -148,13 +159,15 @@ websocket.onmessage = async (message) => {
             await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
             break;
 
-        case 'checkAlive':
-            // ответ серверу на запрос на проверку жив ли я(клиент)
-            websocket.send(JSON.stringify({
-                type: 'imAlive',
-            }));
-            console.log(`Sending \"imAlive\" to server`);
+        case 'errSuchUserLoggedIn':
+            console.log(data.error);
+            setUniqueName(date.uniqueName);
             break;
+
+        case "notification":
+            console.log(data.msg)
+            break;
+
 
         default:
             console.error('Unknown message type: ', data.type);

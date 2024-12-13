@@ -30,6 +30,12 @@ padding: 0.5em 0.5em 0.5em}
   margin: 10px auto;
 }
 
+.selector-box {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  margin: 10px;
+}
 
 label {
   align-self: center;
