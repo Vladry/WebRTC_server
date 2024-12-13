@@ -6,7 +6,7 @@ const sessionLifeTime = 24 * 60 * 60 * 1000;
 {// Функция обработки WebSocket-соединения
     function handleWebSocketConnection(request, socket, head, wss, session) {
         wss.on('connection', (ws) => {
-            console.log('wss created');
+            console.log('new empty wss created');
             // ws.clientId = session.clientId;     // Сохраняем clientId в объекте WebSocket для последующей отправки собеседникам всего объекта WebSocket уже с Id данного клиента
             ws.send(JSON.stringify({type: 'notification', msg: `Hello, client ${ws.clientId}!`}));
 
@@ -19,10 +19,6 @@ const sessionLifeTime = 24 * 60 * 60 * 1000;
                     case 'register':
                         let renameRequired = false;
                         console.log('register ->');
-                        /*                        if (clients.get(ws.clientId)) { // удаляем старую запись клиента, если он уже был в базе, чтобы потом добавить обновлённого и не было путанницы с проверкой уже зарегистрированных с data.userName клиентов
-                                                    clients.delete(ws.clientId);
-                                                }*/
-
                         //проверка имени с фронта на уникальность среди logged in юзеров
                         while (userCheck(data.userName)) { // и видоизменяем "data.userName" прилетевшее с фронта для повторной попытки логина с уникальным именем
                             data.userName += "_";

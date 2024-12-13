@@ -63,6 +63,14 @@ websocket.onopen = () => {
     //  тут выполняем любой код, который хотим выполнить при загрузке страницы
 };
 
+function sendRegistration() {
+    // Регистрация клиента на сервере
+    websocket.send(JSON.stringify({
+        type: 'register',
+        userName: clientId,
+    }));
+    console.log(`ws.send registration: clientId = ${clientId}`);
+}
 
 function register(clientId) {
 
@@ -70,24 +78,9 @@ function register(clientId) {
     if (clientId === "false" || clientId === null || clientId === undefined) {
         return;
     }
-    const sendRegistration = () => {
-        // Регистрация клиента на сервере
-        websocket.send(JSON.stringify({
-            type: 'register',
-            userName: clientId,
-        }));
-        console.log(`ws.send registration: clientId = ${clientId}`);
-    }
 
+    sendRegistration();
 
-    if (websocket.readyState === websocket.OPEN) {
-        sendRegistration();
-    } else {
-        console.log("WebSocket not ready. Waiting to send registration...");
-        websocket.addEventListener('open', () => {
-            sendRegistration()
-        }, {once: true}); // Событие обработается только один раз
-    }
 
     peersHandler();
 }
