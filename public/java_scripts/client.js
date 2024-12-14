@@ -5,17 +5,17 @@ let targetId = null;
 
 let peerConnection = new RTCPeerConnection(configuration);
 const remoteVideoEl = document.getElementById('remoteVideo');
-
 const selectClientEl = document.getElementById('selectUser');
-const events = ['change', 'dblclick'];
+const events = ['input', 'dblclick'];
 const handlerSelectClient = () => {
-    // selectClientEl.disabled = true;
     clientId = selectClientEl.value;
     localStorage.setItem('clientId', selectClientEl.value);
-    register(clientId);
+    location.reload(); //перезагрузка стр. нужна для того, чтобы на бэк прилетела свежая сессия из request именно для текущего юзера
+    // a register(clientId) выполнится уже в initialize() при наличии localStorage.getItem('clientId')
 }
 
-function setUniqueName(uniqueName){  //когда с сервера прилетает взамен неуникальному cliendId скорректированное уникальное- устанавливаем его на клиенте
+function setUniqueName(uniqueName){
+//когда с сервера прилетает взамен неуникальному cliendId скорректированное уникальное- устанавливаем его на клиенте
     clientId = uniqueName;
     selectClientEl.value = uniqueName;
     localStorage.set('clientId', uniqueName)
@@ -32,14 +32,14 @@ const btnEl = document.getElementById('btn');
 btnEl.addEventListener('click', () => initiate(clientId, targetId));
 
 const selectTargetEl = document.getElementById('selectTarget');
-selectTargetEl.addEventListener('change', () => {
+selectTargetEl.addEventListener('input', () => {
     targetId = selectTargetEl.value;
     localStorage.setItem('targetId', selectTargetEl.value);
     btnEl.innerText = `Звоним ${selectTargetEl.value} ?`;
 });
 
 
-const initialize = () => {
+function initialize (){
     if (localStorage.getItem('clientId')) {
         clientId = localStorage.getItem('clientId');
         selectClientEl.value = clientId;
@@ -73,15 +73,12 @@ function sendRegistration() {
 }
 
 function register(clientId) {
-
     console.log("register->   ", clientId);
     if (clientId === "false" || clientId === null || clientId === undefined) {
         return;
     }
 
     sendRegistration();
-
-
     peersHandler();
 }
 
@@ -154,7 +151,7 @@ websocket.onmessage = async (message) => {
 
         case 'errSuchUserLoggedIn':
             console.log(data.error);
-            setUniqueName(date.uniqueName);
+            setUniqueName(data.uniqueName);
             break;
 
         case "notification":
