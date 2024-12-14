@@ -16,12 +16,13 @@
     <video id="remoteVideo" autoplay muted playsinline></video>
     <div class="selector-box" style="align-self: center; display:flex; flex-direction: column; margin: 10px;">
         <label for="selectUser">Ты кто?
-            <input id="selectUser" value="dt" placeholder="для недефолтного абонента"/>
+            <input id="selectUser" value="dt"/>
         </label>
+        <button id="confirmSelectUser">Подтвердить пользователя</button>
         <label for="selectTarget">Кому звоним?
             <input id="selectTarget" value="rtc"/>
         </label>
-        <button id="btn">Call</button>
+        <button id="confirmSelectTarget">Call</button>
         <video id="localVideo" autoplay muted playsinline></video>
     </div>
 

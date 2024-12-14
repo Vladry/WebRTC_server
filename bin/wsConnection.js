@@ -1,17 +1,31 @@
+const HandleUpgradeToWS = require("ws");
+const wss = new HandleUpgradeToWS.Server({noServer: true});
 const {parse} = require('cookie');
 const clients = new Map(); // Используем Map для хранения объектов ws всех клиентов с их Id в поле ws.clientId
 // Создаем WebSocket сервер поверх HTTP сервера
 const sessionLifeTime = 24 * 60 * 60 * 1000;
+const getSession = require('./handleUpgradeToWS.js');
 
 {// Функция обработки WebSocket-соединения
-    function handleWebSocketConnection(request, socket, head, wss, session) {
-        wss.on('connection', (ws) => {
+    function handleWebSocketConnection(request, socket, head, session) {
+        wss.on('connection', (ws, req) => {
             console.log('new empty wss created');
-            // ws.clientId = session.clientId;     // Сохраняем clientId в объекте WebSocket для последующей отправки собеседникам всего объекта WebSocket уже с Id данного клиента
-            ws.send(JSON.stringify({type: 'notification', msg: `Hello, client ${ws.clientId}!`}));
+
+            getSession(request, socket)
+                .then(session => {
+                    console.log("Session is ready:", session);
+//  do my code here!!!
+                })
+                .catch(error => {
+                    console.error("Failed to get session:", error);
+                });
+
+
+            ws.send(JSON.stringify({type: 'notification', msg: `Hello, client ${req}!`}));
 
             ws.on('message', (message) => {
                 const data = JSON.parse(message);
+                // console.log("ws.on('message')-> session: ", session)
 
                 switch (data.type) {
 
@@ -20,7 +34,7 @@ const sessionLifeTime = 24 * 60 * 60 * 1000;
                         let renameRequired = false;
                         console.log('register ->');
                         //проверка имени с фронта на уникальность среди logged in юзеров
-                        while (userCheck(data.userName)) { // и видоизменяем "data.userName" прилетевшее с фронта для повторной попытки логина с уникальным именем
+                        while (userCheck(data.userName, session)) { // и видоизменяем "data.userName" прилетевшее с фронта для повторной попытки логина с уникальным именем
                             data.userName += "_";
                             renameRequired = true;
                         } // TODO тут сервер может зависнуть при не верномкоде 
@@ -32,10 +46,11 @@ const sessionLifeTime = 24 * 60 * 60 * 1000;
                                 uniqueName: data.userName
                             }));
                         }
-
+                        console.log("old name: ", ws.clientId)
                         ws.clientId = data.userName;
-                        clients.set(ws.clientId, {ws: ws, clientSession: session});  //в Map, по ключу клиентского Id размещаем этот объект ws, который потом перешлём собеседнику для создания связи
+                        clients.set(ws.clientId, {ws: ws, session: session});  //в Map, по ключу клиентского Id размещаем этот объект ws, который потом перешлём собеседнику для создания связи
                         console.log(`new name : ${data.userName}`);
+                        console.log("session.clientId: ", `${session.clientId + "   ->" + data.userName}`)
                         prnClients("at end of register-> ");
                         break;
 
@@ -120,13 +135,17 @@ function prnClients(prefix) {
     clients.forEach((value, key) => console.log(key));
 }
 
-function userCheck(name) {
+function userCheck(name, session) {
     let userExists = false;
     for (const [key, client] of clients.entries()) {
-        if (client.lastActivity <= Date.now() - sessionLifeTime) {
+        if (client.lastActivity <= Date.now() - sessionLifeTime) { // вычистить юзеров по устаревшим сессиям
             clients.delete(key);
         }
-        if (key === name) { // TODO а эту проверку ни в коем случае не удалять!!
+        if (client.session.clientId === session.clientId) { // если висел юзер с такой же сессией как новый юзер - старого удалить
+            clients.delete(key)
+        }
+
+        if (key === name) {  // возвращаем подтверждение того, что юзер с таким же именем уже существует в базе
             userExists = true
         }
     }

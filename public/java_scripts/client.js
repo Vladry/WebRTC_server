@@ -2,16 +2,20 @@
 const websocket = new WebSocket('wss://195.3.129.213:3003'); // Используйте wss для HTTPS
 let clientId = null;
 let targetId = null;
+let wsIsOpen = false;
+let doRegisterFlag = false;
 
 let peerConnection = new RTCPeerConnection(configuration);
 const remoteVideoEl = document.getElementById('remoteVideo');
 const selectClientEl = document.getElementById('selectUser');
-const events = ['input', 'dblclick'];
-const handlerSelectClient = () => {
+const confirmSelectUserEl = document.getElementById('confirmSelectUser');
+const events = ['click', 'dblclick'];
+const handlSelectClient = () => {
     clientId = selectClientEl.value;
     localStorage.setItem('clientId', selectClientEl.value);
+    console.log('handlerSelectClient-> ')
     location.reload(); //перезагрузка стр. нужна для того, чтобы на бэк прилетела свежая сессия из request именно для текущего юзера
-    // a register(clientId) выполнится уже в initialize() при наличии localStorage.getItem('clientId')
+    // -- register(clientId) выполнится уже в initialize() при наличии localStorage.getItem('clientId')
 }
 
 function setUniqueName(uniqueName){
@@ -25,10 +29,10 @@ function setUniqueName(uniqueName){
     container.appendChild(uniqueNameWarningEl);
 }
 
-events.forEach(e => selectClientEl.addEventListener(e, handlerSelectClient));
+events.forEach(e => confirmSelectUserEl.addEventListener(e, handlSelectClient));
 
 
-const btnEl = document.getElementById('btn');
+const btnEl = document.getElementById('confirmSelectTarget');
 btnEl.addEventListener('click', () => initiate(clientId, targetId));
 
 const selectTargetEl = document.getElementById('selectTarget');
@@ -43,8 +47,7 @@ function initialize (){
     if (localStorage.getItem('clientId')) {
         clientId = localStorage.getItem('clientId');
         selectClientEl.value = clientId;
-        register(clientId);
-
+        doRegisterFlag = true; //запускает внутри ws.onopen функцию регистрации клиента
     }
 
     if (localStorage.getItem('targetId')) {
@@ -59,8 +62,13 @@ initialize();
 
 
 websocket.onopen = () => {
-    // console.log('WebSocket connected');
+    wsIsOpen = true;
+    console.log('WebSocket connected');
     //  тут выполняем любой код, который хотим выполнить при загрузке страницы
+    if (doRegisterFlag) {
+        register(clientId);
+        doRegisterFlag = false;
+    }
 };
 
 function sendRegistration() {
