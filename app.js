@@ -25,14 +25,14 @@ app.set('view engine', 'pug');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const sessionStore = new MemoryStoreInstance({
+const sessionStoreInst = new MemoryStoreInstance({
   checkPeriod: 86400000, // Удаление устаревших сессий каждые 24 часа
 });
 const sessionMiddleware = session({
   secret: process.env.SECRET_KEY_COOKIE,
   resave: false,
   saveUninitialized: true,
-  store: sessionStore,
+  store: sessionStoreInst,
   cookie: {
     maxAge: 1000 * 60 * 60 * 24 * 30, // 30 дней
     // secure: false, // Не использовать HTTPS для куки, т.к. на сервере нет SSL-сертификата
@@ -72,4 +72,4 @@ app.get('/', (req, res) => {
 });
 
 
-export default app;
+export {app, sessionStoreInst};

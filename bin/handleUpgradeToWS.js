@@ -1,6 +1,6 @@
 import handleWebSocketConnection from './wsConnection.js';
 import {v4 as uuidv4} from 'uuid';
-
+let sessionStore = null;
 export default (server) => {
     // Обрабатываем запросы upgrade
     server.on('upgrade', (request, socket, head) => {
@@ -18,8 +18,9 @@ function handleUpgradeRequest(request, socket, head) {
     getSession(request, socket)
         .then(session => {
             // console.log("sessionId: ", sessionId)
-            console.log("Session is ready:", session);
-            handleWebSocketConnection(request, socket, head, session);
+            console.log("Тут получаем сессию только для будущей авторизации, пока что всех пропускаем в систему.", session);
+            console.log("'эту сессию никуда не передаём")
+            handleWebSocketConnection(request, socket, head);
         })
         .catch(error => {
             console.error("Failed to get session:", error);
@@ -28,8 +29,11 @@ function handleUpgradeRequest(request, socket, head) {
 
 
 export async function getSession (request, socket) {
-    const sessionStore = await import ('../app.js');
-    const sessionId = getSessionIdFromRequest(request);
+    if (!sessionStore) {
+        const {sessionStoreInst} = await import ('../app.js');
+        sessionStore = sessionStoreInst;
+    }
+    const sessionId = await getSessionIdFromRequest(request);
     if (!sessionId) {
         console.log("sessionId: null");
         sendBadRequest(socket, 'Session ID missing');
@@ -56,6 +60,7 @@ export async function getSession (request, socket) {
 
 
     async function createNewSession(sessionId, sessionStore) {
+        console.log("creating session in   createNewSession->")
         const newSession = {
             clientId: uuidv4(),
             lastActivity: Date.now(),
@@ -78,7 +83,7 @@ export async function getSession (request, socket) {
    async function getSessionIdFromRequest(request) {
         const {parse} = await import ('cookie');
         const cookies = parse(request.headers.cookie || '');
-        return cookies['connect.sid']?.split('.')[0]; // Извлекаем sessionId
+       return cookies['connect.sid']?.split('.')[0]; // Извлекаем sessionId
     }
 // Функция отправки ошибки 400
     function sendBadRequest(socket, message) {

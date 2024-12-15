@@ -110,6 +110,11 @@ websocket.onmessage = async (message) => {
 
     switch (data.type) {
 
+        case 'registered':
+            console.log(data.msg);
+            setUniqueName(data.uniqueName);
+            break;
+
         case 'initiate':
             // if (data.from === targetId) {
                 console.log('Call initiated by: ', data.from);
@@ -159,7 +164,7 @@ websocket.onmessage = async (message) => {
 
         case 'errSuchUserLoggedIn':
             console.log(data.error);
-            setUniqueName(data.uniqueName);
+
             break;
 
         case "notification":

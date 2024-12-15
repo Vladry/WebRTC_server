@@ -1,21 +1,20 @@
-import { WebSocketServer } from "ws";
+import {WebSocketServer} from "ws";
+import {getSession} from './handleUpgradeToWS.js';
+
 const wss = new WebSocketServer({ noServer: true });
 
 const clients = new Map(); // Используем Map для хранения объектов ws всех клиентов с их Id в поле ws.clientId
+const closeWsForClients = new Map(); // Используем Map для хранения объектов ws всех клиентов, для которых нужно закрыть вебсокет после их пере-регистрации под другим именем
 const sessionLifeTime = 24 * 60 * 60 * 1000;
-import {getSession} from './handleUpgradeToWS.js';
-
+const activeConnections = new Set();
 // Функция обработки WebSocket-соединения
-   function handleWebSocketConnection(request, socket, head, session) {
-        wss.on('connection', (ws, req) => {
-            console.log('new empty wss created');
+export default function handleWebSocketConnection(request, socket, head) {
+    wss.on('connection', async (ws, req) => {
+        let session;
+        console.log('new wss created');
+        activeConnections.add(ws);
 
-            getSession(request, socket)
-                .then(session => {
-                    console.log("Session is ready:", session);
-//  do my code here!!!
-                })
-                .catch(error => {
+        session = await getSession(request, socket).catch(error => {
                     console.error("Failed to get session:", error);
                 });
 
@@ -30,27 +29,18 @@ import {getSession} from './handleUpgradeToWS.js';
 
 
                     case 'register':
-                        let renameRequired = false;
                         console.log('register ->');
                         //проверка имени с фронта на уникальность среди logged in юзеров
-                        while (userCheck(data.userName, session)) { // и видоизменяем "data.userName" прилетевшее с фронта для повторной попытки логина с уникальным именем
-                            data.userName += "_";
-                            renameRequired = true;
-                        } // TODO тут сервер может зависнуть при не верномкоде 
+                        const registeredName = issueUniqueName(data.userName, session); // подобрать уникальное имя в случае, если пришёл не уникальный пользователь и вернуть в data.userName
+                        register(registeredName, session, ws);
 
-                        if (renameRequired) { // тут уникальное имя уже подобрано и  положено в "data.userName"
                             ws.send(JSON.stringify({
-                                type: "errSuchUserLoggedIn",
-                                error: `Такой пользователь уже залогинен в системе. Ваше имя будет изменено на: ${data.userName}`,
-                                uniqueName: data.userName
+                                type: "registered",
+                                msg: `Ваше имя занесено в систему как: ${registeredName}`,
+                                uniqueName: registeredName
                             }));
-                        }
-                        console.log("old name: ", ws.clientId)
-                        ws.clientId = data.userName;
-                        clients.set(ws.clientId, {ws: ws, session: session});  //в Map, по ключу клиентского Id размещаем этот объект ws, который потом перешлём собеседнику для создания связи
-                        console.log(`new name : ${data.userName}`);
-                        console.log("session.clientId: ", `${session.clientId + "   ->" + data.userName}`)
-                        prnClients("at end of register-> ");
+
+
                         break;
 
 
@@ -111,15 +101,16 @@ import {getSession} from './handleUpgradeToWS.js';
 
 
             ws.on('close', () => {
-                console.log("client disconnected and his WSS descroyed. But we'll try to keep it")
+                console.log("client disconnected and his WS descroyed")
                 if (ws.clientId) {
                     clients.delete(ws.clientId);
                     prnClients("on Close: ");
+                    activeConnections.delete(ws)
+                    console.log('activeConnections: ', activeConnections.size)
                 }
 
             });
 
-            // });
         });
 
         wss.handleUpgrade(request, socket, head, (ws) => {
@@ -134,23 +125,30 @@ function prnClients(prefix) {
     clients.forEach((value, key) => console.log(key));
 }
 
-function userCheck(name, session) {
-    let userExists = false;
+function issueUniqueName(suggestedName, session) { //задача функции: только вернуть уникальное имя и удалить старую запись в clients если юзер с такой сессией уже существовал
+    let registeredName = suggestedName;
+
     for (const [key, client] of clients.entries()) {
         if (client.lastActivity <= Date.now() - sessionLifeTime) { // вычистить юзеров по устаревшим сессиям
             clients.delete(key);
         }
         if (client.session.clientId === session.clientId) { // если висел юзер с такой же сессией как новый юзер - старого удалить
             clients.delete(key)
+            return registeredName; // возвращаем на пере-подключение юзера с той же сессией что и была под его новым именем
         }
-
-        if (key === name) {  // возвращаем подтверждение того, что юзер с таким же именем уже существует в базе
-            userExists = true
+        if (key === suggestedName) {
+            registeredName += `.${Date.now()}`; // создали уникальный ключ-идентификатор юзера в базе clients
+            return registeredName; //просто возвращаем новое имя, т.к. существующее уже зарегистрировано и оно не совпадает сессиями с новым (т.е. это не текущий активный юзер)
         }
     }
-    return userExists;
+    return registeredName; //новое имя не совпало ни с одним из существующих в базе, но при этом мы вычистили все совпадающие сессии и устаревшие соединения
 }
 
-
-export default handleWebSocketConnection;
+function register(registeredName, session, ws) {
+    ws.clientId = registeredName; // записать основным ключём сюда подобранное уникальное имя
+    clients.set(ws.clientId, {ws: ws, session: session});  //в Map, по ключу клиентского Id размещаем этот объект ws, который потом перешлём собеседнику для создания связи
+    console.log(`registeredName : ${registeredName}`);
+    console.log("session.clientId: ", `${session.clientId + " attached to-> " + registeredName}`)
+    prnClients("at end of register-> ");
+};
 
