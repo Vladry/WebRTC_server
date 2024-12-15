@@ -3,19 +3,29 @@
  * Module dependencies.
  */
 
-const app = require('../app').app;
-const debug = require('debug')('webrtc-server:server');
+import app from '../app.js';
+import debug from 'debug';
+import dotenv from 'dotenv';
+dotenv.config({ path: `${locations.env}` });
 // const http = require('http');
-const locations =require( '../locations.json');
-require('dotenv').config({path: `${locations.env}`});
+import fs from 'fs';
+import path from 'path';
+// Получаем путь к текущему файлу через import.meta.url
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
+
+// Теперь можно использовать __dirname для создания абсолютного пути к файлам
+const locationsPath = path.join(__dirname, '../locations.json');
+
+// Чтение файла locations.json
+const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf-8'));
+
 
 
 /**
  * Готовим переменные под сертификат для https
  * **/
-const https = require('https');
-const fs = require('fs');
-const path = require("path");
+import https from 'https';
 
 //  Новая сертификация: https
 const key = fs.readFileSync(path.join(__dirname, "../secrets/key.pem"), 'utf8');
@@ -126,7 +136,8 @@ server.listen(port, '0.0.0.0', () => {
   }
 
 
-// Подключаем WebSocket и передаём в него сервер
-require('./handleUpgradeToWS.js')(server);
+// передаём в него сервер
+import handleUpgradeToWS from './handleUpgradeToWS.js';
+handleUpgradeToWS(server);
 // вызываем модуль turnServer-a
 // require('./turn_server.js')();

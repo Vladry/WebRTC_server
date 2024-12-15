@@ -1,17 +1,30 @@
-const createError = require('http-errors');
-const express = require('express');
-const path = require('path');
+import createError from 'http-errors';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+// import logger from 'morgan'; // если нужно
+import sassMiddleware from 'sass-middleware';
+import session from 'express-session';
+import indexRouter from './routes/index.js';
+import usersRouter from './routes/users.js';
 
-const cookieParser = require('cookie-parser');
-// const logger = require('morgan');
-const sassMiddleware = require('sass-middleware');
-const session = require('express-session');
-const indexRouter = require('./routes/index');
+import fs from 'fs';
+import path from 'path';
+// Получаем путь к текущему файлу через import.meta.url
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
 
-const usersRouter = require('./routes/users');
-const locations = require("./locations.json");
-require('dotenv').config({path: `${locations.env}`});
-const MemoryStore = require('memorystore')(session);
+// Теперь можно использовать __dirname для создания абсолютного пути к файлам
+const locationsPath = path.join(__dirname, '../locations.json');
+
+// Чтение файла locations.json
+const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf-8'));
+
+
+import dotenv from 'dotenv';
+dotenv.config({ path: `${locations.env}` });
+
+import MemoryStore from 'memorystore';
+const MemoryStoreInstance = MemoryStore(session);
 
 const app = express();
 
@@ -25,7 +38,7 @@ app.set('view engine', 'pug');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const sessionStore = new MemoryStore({
+const sessionStore = new MemoryStoreInstance({
   checkPeriod: 86400000, // Удаление устаревших сессий каждые 24 часа
 });
 const sessionMiddleware = session({
@@ -72,4 +85,4 @@ app.get('/', (req, res) => {
 });
 
 
-module.exports = { app, sessionStore };
+export default { app, sessionStore };

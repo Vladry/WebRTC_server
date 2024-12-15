@@ -1,7 +1,20 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const locations = require("../locations.json");
-require('dotenv').config({path: `${locations.env}`});
+
+import fs from 'fs';
+import path from 'path';
+// Получаем путь к текущему файлу через import.meta.url
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
+
+// Теперь можно использовать __dirname для создания абсолютного пути к файлам
+const locationsPath = path.join(__dirname, '../locations.json');
+
+// Чтение файла locations.json
+const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf-8'));
+
+import  dotenv from 'dotenv';
+dotenv.config({path: `${locations.env}`});
 const port = process.env.PORT || '3000';
 const MaxObj = {
     title: 'Макс!',
@@ -49,4 +62,4 @@ router.get('/Lesha', (req, res) => {
 router.get('/Vlad', (req, res) => {
     res.render('dashboard', VladObj);
 });
-module.exports = router;
+export default router;

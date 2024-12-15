@@ -1,12 +1,7 @@
-let sessionStore;
-let parse;
+import handleWebSocketConnection from './wsConnection.js';
+import {v4 as uuidv4} from 'uuid';
 
-
-const handleWebSocketConnection = require('./wsConnection');
-const {v4: uuidv4} = require('uuid');
-
-
-module.exports = (server) => {
+export default (server) => {
     // Обрабатываем запросы upgrade
     server.on('upgrade', (request, socket, head) => {
         handleUpgradeRequest(request, socket, head);
@@ -32,11 +27,8 @@ function handleUpgradeRequest(request, socket, head) {
 }
 
 
-async function getSession(request, socket) {
-    if (!sessionStore) {
-        sessionStore = require('../app.js');
-    }
-
+export async function getSession (request, socket) {
+    const sessionStore = await import ('../app.js');
     const sessionId = getSessionIdFromRequest(request);
     if (!sessionId) {
         console.log("sessionId: null");
@@ -83,10 +75,8 @@ async function getSession(request, socket) {
 
 
     // Функция извлечения sessionId из cookies
-    function getSessionIdFromRequest(request) {
-        if(!parse){
-            parse = require('cookie');
-        }
+   async function getSessionIdFromRequest(request) {
+        const {parse} = await import ('cookie');
         const cookies = parse(request.headers.cookie || '');
         return cookies['connect.sid']?.split('.')[0]; // Извлекаем sessionId
     }
@@ -97,5 +87,4 @@ async function getSession(request, socket) {
     }
 }
 
-module.exports = getSession;
 
