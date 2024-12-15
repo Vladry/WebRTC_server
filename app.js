@@ -6,22 +6,9 @@ import sassMiddleware from 'sass-middleware';
 import session from 'express-session';
 import indexRouter from './routes/index.js';
 import usersRouter from './routes/users.js';
-
-import fs from 'fs';
 import path from 'path';
-// Получаем путь к текущему файлу через import.meta.url
-const __filename = new URL(import.meta.url).pathname;
-const __dirname = path.dirname(__filename);
-
-// Теперь можно использовать __dirname для создания абсолютного пути к файлам
-const locationsPath = path.join(__dirname, '../locations.json');
-
-// Чтение файла locations.json
-const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf-8'));
-
-
 import dotenv from 'dotenv';
-dotenv.config({ path: `${locations.env}` });
+dotenv.config({path: "./secrets/.env"});
 
 import MemoryStore from 'memorystore';
 const MemoryStoreInstance = MemoryStore(session);
@@ -31,7 +18,7 @@ const app = express();
 
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', './views');
 app.set('view engine', 'pug');
 
 //app.use(logger('dev'));  // 'dev' формат для удобного чтения в терминале
@@ -57,8 +44,8 @@ app.use(cookieParser());
 app.use(sessionMiddleware);
 // Подключаем sass-middleware
 app.use(sassMiddleware({
-  src: path.join(__dirname, '/scss'), // Папка с исходными файлами .scss
-  dest: path.join(__dirname, '/public/stylesheets'), // Папка, куда будут выводиться скомпилированные .css файлы
+  src: path.join('/scss'), // Папка с исходными файлами .scss
+  dest: path.join('/public/stylesheets'), // Папка, куда будут выводиться скомпилированные .css файлы
   indentedSyntax: false, // true = .sass and false = .scss
   sourceMap: true,
   debug: true, // Включаем дебаг для просмотра ошибок компиляции
@@ -66,7 +53,7 @@ app.use(sassMiddleware({
   prefix: '',  // Префикс для скомпилированных CSS
 }));
 // Статические файлы
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join('public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

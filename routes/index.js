@@ -1,20 +1,8 @@
 import express from 'express';
 const router = express.Router();
 
-import fs from 'fs';
-import path from 'path';
-// Получаем путь к текущему файлу через import.meta.url
-const __filename = new URL(import.meta.url).pathname;
-const __dirname = path.dirname(__filename);
-
-// Теперь можно использовать __dirname для создания абсолютного пути к файлам
-const locationsPath = path.join(__dirname, '../locations.json');
-
-// Чтение файла locations.json
-const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf-8'));
-
 import  dotenv from 'dotenv';
-dotenv.config({path: `${locations.env}`});
+dotenv.config({path: "./secrets/.env" });
 const port = process.env.PORT || '3000';
 const MaxObj = {
     title: 'Макс!',
