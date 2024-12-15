@@ -72,4 +72,4 @@ app.get('/', (req, res) => {
 });
 
 
-export default { app, sessionStore };
+export default app;

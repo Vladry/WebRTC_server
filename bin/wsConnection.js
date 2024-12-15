@@ -1,10 +1,11 @@
-import {WebSocketServer} from "ws";
-const wss = new WebSocketServer.Server({noServer: true});
+import { WebSocketServer } from "ws";
+const wss = new WebSocketServer({ noServer: true });
+
 const clients = new Map(); // Используем Map для хранения объектов ws всех клиентов с их Id в поле ws.clientId
 const sessionLifeTime = 24 * 60 * 60 * 1000;
 import {getSession} from './handleUpgradeToWS.js';
 
-{// Функция обработки WebSocket-соединения
+// Функция обработки WebSocket-соединения
    function handleWebSocketConnection(request, socket, head, session) {
         wss.on('connection', (ws, req) => {
             console.log('new empty wss created');
@@ -124,7 +125,7 @@ import {getSession} from './handleUpgradeToWS.js';
         wss.handleUpgrade(request, socket, head, (ws) => {
             wss.emit('connection', ws, request);
         });
-    }
+
 
 }
 
@@ -150,4 +151,6 @@ function userCheck(name, session) {
     return userExists;
 }
 
+
 export default handleWebSocketConnection;
+

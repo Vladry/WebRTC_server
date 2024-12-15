@@ -6,13 +6,18 @@
 import app from '../app.js';
 import debug from 'debug';
 import dotenv from 'dotenv';
-dotenv.config({ path: "./secrets/.env" });
-// const http = require('http');
+
+
 import fs from 'fs';
-import path from 'path';
+// получение модных в CommonJS:  __filename, __dirname
+import { fileURLToPath } from 'url'               // пример получения __filename, __dirname
+import path, { dirname } from 'path'              //
+const __filename = fileURLToPath(import.meta.url) //
+const __dirname = dirname(__filename)             //
 
-
-
+const locationsPath = path.resolve('./locations.json');
+const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf-8'));
+dotenv.config({ path: `${locations.env}` });   //тут использовал locations.env где указан путь к ./secrets/.env, чтобы не указывать явно: dotenv.config({ path: "./secrets/.env" });
 
 /**
  * Готовим переменные под сертификат для https
@@ -20,8 +25,8 @@ import path from 'path';
 import https from 'https';
 
 //  Новая сертификация: https
-const key = fs.readFileSync(path.join(__dirname, "../secrets/key.pem"), 'utf8');
-const cert = fs.readFileSync(path.join(__dirname, "../secrets/cert.pem"), 'utf8');
+const key = fs.readFileSync(path.resolve(__dirname, "../secrets/key.pem"), 'utf8'); // пример с применением __dirname
+const cert = fs.readFileSync("./secrets/cert.pem", 'utf8'); // пример без __dirname
 const credentials = {key: key, cert: cert,  secureProtocol: 'TLS_method',
   ciphers: [
     'ECDHE-RSA-AES128-GCM-SHA256',
