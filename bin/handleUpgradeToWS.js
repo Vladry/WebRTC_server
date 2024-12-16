@@ -1,11 +1,17 @@
-import handleWebSocketConnection from './wsConnection.js';
+import attachWebSocketHandlers, {handleWebSocketConnection} from './wsConnection.js';
 import {v4 as uuidv4} from 'uuid';
 let sessionStore = null;
+let upgradeHandlerAttached = false;
+let websocketHandlersAlreadyAttached = false;
 export default (server) => {
     // Обрабатываем запросы upgrade
-    server.on('upgrade', (request, socket, head) => {
-        handleUpgradeRequest(request, socket, head);
-    });
+
+    if (!upgradeHandlerAttached) {
+        server.on('upgrade', (request, socket, head) => {
+            handleUpgradeRequest(request, socket, head);
+        });
+        upgradeHandlerAttached = true;
+    }
     // WebSocket server is running
 };
 
@@ -20,7 +26,11 @@ function handleUpgradeRequest(request, socket, head) {
             // console.log("sessionId: ", sessionId)
             console.log("Тут получаем сессию только для будущей авторизации, пока что всех пропускаем в систему.", session);
             console.log("'эту сессию никуда не передаём")
-            handleWebSocketConnection(request, socket, head);
+            if (!websocketHandlersAlreadyAttached) {
+                attachWebSocketHandlers(request, socket, head); //вызвать единожды для регистрации хэндлеров в WS_Сервере
+                websocketHandlersAlreadyAttached = true;
+            }
+            handleWebSocketConnection(request, socket, head); // вызывать при каждой перезагрузке с фронта
         })
         .catch(error => {
             console.error("Failed to get session:", error);
