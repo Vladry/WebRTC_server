@@ -1,5 +1,6 @@
 import attachWebSocketHandlers, {handleWebSocketConnection} from './wsConnection.js';
 import {v4 as uuidv4} from 'uuid';
+
 let sessionStore = null;
 let upgradeHandlerAttached = false;
 let websocketHandlersAlreadyAttached = false;
@@ -20,17 +21,18 @@ export default (server) => {
 function handleUpgradeRequest(request, socket, head) {
     console.log("handleUpgradeRequest->")
 
-
+    console.log('entering getSession_1 ->');
+    console.log('from request_1: ', request.rawHeaders[21]);
     getSession(request, socket)
         .then(session => {
-            // console.log("sessionId: ", sessionId)
-            console.log("Тут получаем сессию только для будущей авторизации, пока что всех пропускаем в систему.", session);
-            console.log("'эту сессию никуда не передаём")
+            const dynamicRequest = {request}
+            // Тут получаем сессию только для будущей авторизации, пока что всех пропускаем в систему
             if (!websocketHandlersAlreadyAttached) {
-                attachWebSocketHandlers(request, socket, head); //вызвать единожды для регистрации хэндлеров в WS_Сервере
+                attachWebSocketHandlers(socket); //вызвать единожды для регистрации хэндлеров в WS_Сервере
                 websocketHandlersAlreadyAttached = true;
             }
             handleWebSocketConnection(request, socket, head); // вызывать при каждой перезагрузке с фронта
+            console.log('session_1: ', session.clientId);
         })
         .catch(error => {
             console.error("Failed to get session:", error);
@@ -49,9 +51,6 @@ export async function getSession (request, socket) {
         sendBadRequest(socket, 'Session ID missing');
         return;
     }
-
-
-    console.log('-> getSession');
     return new Promise((resolve, reject) => {
         sessionStore.get(sessionId, (err, session) => {
             if (err) {
@@ -63,7 +62,6 @@ export async function getSession (request, socket) {
                 const newSession = createNewSession(sessionId, sessionStore);
                 return resolve(newSession);
             }
-            // console.log("Session retrieved!");
             resolve(session);
         });
     });

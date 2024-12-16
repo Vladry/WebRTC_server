@@ -6,16 +6,20 @@ const wss = new WebSocketServer({noServer: true});
 const clients = new Map(); // Используем Map для хранения объектов ws всех клиентов с их Id в поле ws.clientId
 const sessionLifeTime = 24 * 60 * 60 * 1000;
 // Функция обработки WebSocket-соединения
-export default function attachWebSocketHandlers(request, socket, head) {
-    wss.on('connection', async (ws, req) => {
+export default function attachWebSocketHandlers(socket) {
+    wss.on('connection', async (ws, request) => {
         let session;
         console.log('new wss created');
 
+
+        console.log('entering getSession_2 ->');
+        console.log('from request_2: ', request.rawHeaders[21]);
         session = await getSession(request, socket).catch(error => {
             console.error("Failed to get session:", error);
         });
+        console.log('session_2: ', session.clientId);
 
-        ws.send(JSON.stringify({type: 'notification', msg: `Hello, client ${req}!`}));
+        ws.send(JSON.stringify({type: 'notification', msg: `Hello, new client!`}));
 
         ws.on('message', (message) => {
             const data = JSON.parse(message);
@@ -101,8 +105,6 @@ export default function attachWebSocketHandlers(request, socket, head) {
             if (ws.clientId) {
                 clients.delete(ws.clientId);
                 prnClients("on Close: ");
-                activeConnections.delete(ws)
-                console.log('activeConnections: ', activeConnections.size)
             }
 
         });
