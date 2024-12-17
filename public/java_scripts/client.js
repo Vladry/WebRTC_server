@@ -91,13 +91,12 @@ function register(clientId) {
 }
 
 
-
 const initiate = (clientId, targetId) => {
     // После регистрации можно инициализировать вызов (по UI или заранее определённому targetId)
     websocket.send(JSON.stringify({
         type: 'initiate',
         targetId: targetId, // Запрос на установление соединения с targetId
-        fromId: clientId,
+        // fromId: clientId,
     }));
     console.log(`Initiate->  ${clientId} is calling ${targetId}`);
 }
@@ -115,7 +114,7 @@ websocket.onmessage = async (message) => {
             setUniqueName(data.uniqueName);
             break;
 
-        case 'initiate':
+        case 'initiated':
             // if (data.from === targetId) {
                 console.log('Call initiated by: ', data.from);
 
@@ -123,7 +122,7 @@ websocket.onmessage = async (message) => {
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
 
-                console.log('Sending offer to target: ', targetId);
+                console.log('Sending offer to: ', data.from);
                 websocket.send(JSON.stringify({
                     type: 'offer',
                     targetId: data.from,
@@ -150,22 +149,16 @@ websocket.onmessage = async (message) => {
 
         case 'answer':
             console.log('Answer received: ', data.sdp);
-
             // Устанавливаем удаленное описание
             await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
             break;
 
         case 'candidate':
             console.log('Candidate received: ', data.candidate);
-
             // Добавляем ICE-кандидата
             await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
             break;
 
-        case 'errSuchUserLoggedIn':
-            console.log(data.error);
-
-            break;
 
         case "notification":
             console.log(data.msg)

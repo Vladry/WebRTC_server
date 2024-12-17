@@ -5,8 +5,8 @@ let sessionStore = null;
 let upgradeHandlerAttached = false;
 let websocketHandlersAlreadyAttached = false;
 export default (server) => {
-    // Обрабатываем запросы upgrade
 
+    // Единоразово обрабатываем запросы upgrade только единожды, при запуске сервера. Управление - флагом upgradeHandlerAttached
     if (!upgradeHandlerAttached) {
         server.on('upgrade', (request, socket, head) => {
             handleUpgradeRequest(request, socket, head);
@@ -19,20 +19,19 @@ export default (server) => {
 
 // Функция обработки upgrade-запросов
 function handleUpgradeRequest(request, socket, head) {
-    console.log("handleUpgradeRequest->")
+    // console.log("handleUpgradeRequest->")
 
-    console.log('entering getSession_1 ->');
-    console.log('from request_1: ', request.rawHeaders[21]);
+    // console.log('entering getSession_1 ->');
+    // console.log('from request_1: ', request.rawHeaders[21]);
     getSession(request, socket)
         .then(session => {
-            const dynamicRequest = {request}
-            // Тут получаем сессию только для будущей авторизации, пока что всех пропускаем в систему
+            // Тут первый раз получаем сессию- только для будущей авторизации.  Пока что всех пропускаем в систему
             if (!websocketHandlersAlreadyAttached) {
                 attachWebSocketHandlers(socket); //вызвать единожды для регистрации хэндлеров в WS_Сервере
                 websocketHandlersAlreadyAttached = true;
             }
             handleWebSocketConnection(request, socket, head); // вызывать при каждой перезагрузке с фронта
-            console.log('session_1: ', session.clientId);
+            // console.log('session_1 (при аутентификации): ', session.clientId);
         })
         .catch(error => {
             console.error("Failed to get session:", error);
@@ -42,7 +41,7 @@ function handleUpgradeRequest(request, socket, head) {
 
 export async function getSession (request, socket) {
     if (!sessionStore) {
-        const {sessionStoreInst} = await import ('../app.js');
+        const {sessionStoreInst} = await import ('../app.js'); //ленивая асинхронная загрузка модуля по-необходимости. Для независимости ф-ции getSession
         sessionStore = sessionStoreInst;
     }
     const sessionId = await getSessionIdFromRequest(request);
@@ -58,7 +57,7 @@ export async function getSession (request, socket) {
                 return reject(err);
             }
             if (!session) {
-                console.log("No session found, creating a new one");
+                // console.log("No session found, creating a new one");
                 const newSession = createNewSession(sessionId, sessionStore);
                 return resolve(newSession);
             }
@@ -68,7 +67,7 @@ export async function getSession (request, socket) {
 
 
     async function createNewSession(sessionId, sessionStore) {
-        console.log("creating session in   createNewSession->")
+        // console.log("creating session in   createNewSession->")
         const newSession = {
             clientId: uuidv4(),
             lastActivity: Date.now(),
