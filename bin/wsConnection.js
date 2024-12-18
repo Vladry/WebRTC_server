@@ -50,8 +50,13 @@ export default function attachWebSocketHandlers(socket) {
                 case 'initiate':
                     // Проверяем наличие targetId в Map
                     console.log('case initiate ->    data.targetId= ', data.targetId);
-                    const targetWs = clients.get(data.targetId).ws;
-                    console.log('targetWs.clientId= ',targetWs.clientId);
+                    let targetWs;
+                    if (clients.get(data.targetId)) {
+                        targetWs = clients.get(data.targetId).ws;
+                        console.log('targetWs.clientId= ',targetWs.clientId);
+                    } else {
+                        console.log(`вызываемого юзера ${data.targetId} не существует в объекте clients`)
+                    }
 
                     if (targetWs) {
                         targetWs.send(JSON.stringify({
@@ -62,7 +67,7 @@ export default function attachWebSocketHandlers(socket) {
                     } else {
                         console.error(`Target client ${data.targetId} not found`);
                         ws.send(JSON.stringify({
-                            type: 'error', message: `Target client ${data.targetId} not connected`,
+                            type: 'error', message:  `Target client ${data.targetId} not logged in`
                         }));
                     }
                     break;
@@ -84,6 +89,7 @@ export default function attachWebSocketHandlers(socket) {
                             type: 'answer', sdp: data.sdp, from: ws.clientId,
                         }));
                         console.log(`Forwarded answer from ${ws.clientId} to ${data.targetId}`);
+                        // console.log('SDP: ', data.sdp);
                     }
                     break;
 
@@ -132,7 +138,8 @@ export function handleWebSocketConnection(request, socket, head) {
 function prnClients(prefix) {
     // ф-ция для распечатки clients. Префикс- для указания, в каком месте кода мы использовали prnClients
     console.log("clients ", prefix);
-    clients.forEach((value, key) => console.log(key));
+    clients.forEach((value, key) => console.log('key: ', key));
+    // clients.forEach((value, key) => console.log('key: ', key, ' value: ', value));
 }
 
 function issueUniqueName(suggestedName, session) {

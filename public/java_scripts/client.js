@@ -22,7 +22,7 @@ function setUniqueName(uniqueName){
 //когда с сервера прилетает взамен неуникальному cliendId скорректированное уникальное- устанавливаем его на клиенте
     clientId = uniqueName;
     selectClientEl.value = uniqueName;
-    localStorage.set('clientId', uniqueName)
+    localStorage.setItem('clientId', uniqueName)
     const container = document.querySelector('.container');
     const uniqueNameWarningEl = document.createElement('p')
     uniqueNameWarningEl.textContent = `Ваше уникальное имя в системе: ${uniqueName}`
@@ -133,7 +133,7 @@ websocket.onmessage = async (message) => {
 
         case 'offer':
             console.log('Offer received: ', data.sdp);
-
+            console.log(data.sdp)
             // Устанавливаем удаленное описание и создаем ответ (answer)
             await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
             const answer = await peerConnection.createAnswer();
@@ -164,6 +164,9 @@ websocket.onmessage = async (message) => {
             console.log(data.msg)
             break;
 
+        case 'error':
+            console.log(data.message)
+            break;
 
         default:
             console.error('Unknown message type: ', data.type);
