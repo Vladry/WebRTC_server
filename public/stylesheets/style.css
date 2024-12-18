@@ -95,12 +95,6 @@ label {
   font-weight: bold;
 }
 
-#selectTarget {
-  background-color: chocolate;
-  color: black;
-  font-weight: bold
-}
-
 input {
   cursor: pointer;
   margin: 2px;

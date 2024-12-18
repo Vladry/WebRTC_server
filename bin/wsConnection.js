@@ -56,7 +56,7 @@ export default function attachWebSocketHandlers(socket) {
                     let targetWs;
                     if (clients.get(data.targetId)) {
                         targetWs = clients.get(data.targetId).ws;
-                        console.log('targetWs.clientId= ',targetWs.clientId);
+                        console.log(`targetWs.clientId= , '${targetWs.clientId}'`);
                     } else {
                         console.log(`вызываемого юзера ${data.targetId} не существует в объекте clients`)
                     }
@@ -64,7 +64,7 @@ export default function attachWebSocketHandlers(socket) {
                     if (targetWs) {
                         targetWs.send(JSON.stringify({
                             // type: 'initiated', from: ws.clientId,
-                            type: 'initiated', from: ws.clientId,
+                            type: 'initiated', from: ws.clientId, targetId: data.targetId
                         }));
                         console.log(`Initiated:  ${ws.clientId} is calling ${data.targetId}`);
                     } else {
@@ -97,8 +97,8 @@ export default function attachWebSocketHandlers(socket) {
                     break;
 
                 case 'candidate':
+                    console.log('in case candidate: ');
                     const candidateTargetWs = clients.get(data.targetId).ws;
-                    // console.log('in case candidate: ');
                     if (candidateTargetWs) {
                         // console.log('data.candidate: ', data.candidate);
 

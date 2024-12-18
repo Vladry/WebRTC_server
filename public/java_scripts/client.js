@@ -1,7 +1,7 @@
 // Подключение к WebSocket-серверу
 const websocket = new WebSocket('wss://195.3.129.213:3003'); // Используйте wss для HTTPS
 let clientId = null;
-let targetId = null;
+let targetIdGlobal = null;
 let wsIsOpen = false;
 let doRegisterFlag = false;
 
@@ -27,29 +27,11 @@ function setUniqueName(uniqueName){
 
 events.forEach(e => confirmSelectUserEl.addEventListener(e, handlSelectClient));
 
-
-const btnEl = document.getElementById('confirmSelectTarget');
-btnEl.addEventListener('click', () => initiate(clientId, targetId));
-
-const selectTargetEl = document.getElementById('selectTarget');
-selectTargetEl.addEventListener('input', () => {
-    targetId = selectTargetEl.value;
-    localStorage.setItem('targetId', selectTargetEl.value);
-    btnEl.innerText = `Звоним ${selectTargetEl.value} ?`;
-});
-
-
 function initialize (){
     if (localStorage.getItem('clientId')) {
         clientId = localStorage.getItem('clientId');
         selectClientEl.value = clientId;
-        doRegisterFlag = true; //запускает внутри ws.onopen функцию регистрации клиента
-    }
-
-    if (localStorage.getItem('targetId')) {
-        targetId = localStorage.getItem('targetId');
-        selectTargetEl.value = localStorage.getItem('targetId');
-        btnEl.innerText = `Звоним ${targetId} ?`;
+        doRegisterFlag = true; //FIXME -разобраться с применением этого флага.   Его задача - запускает внутри ws.onopen функцию регистрации клиента
     }
 }
 
@@ -87,12 +69,13 @@ function register(clientId) {
 }
 
 
-const initiate = (clientId, targetId) => {
+const initiate = (clientId, newTargetId) => {
     // После регистрации можно инициализировать вызов (по UI или заранее определённому targetId)
-    console.log(`Initiate->  ${clientId} is calling ${targetId}`);
+    targetIdGlobal = newTargetId;
+    console.log(`Initiate->  ${clientId} is calling ${newTargetId}`);
     websocket.send(JSON.stringify({
         type: 'initiate',
-        targetId: targetId, // Запрос на установление соединения с targetId
+        targetId: newTargetId, // Запрос на установление соединения с targetId
     }));
 }
 
@@ -113,7 +96,7 @@ websocket.onmessage = async (message) => {
         case 'initiated':
             // if (data.from === targetId) {
                 console.log('Call initiated by: ', data.from);
-
+                targetIdGlobal = data.targetId;
                 // Создаем предложение (offer)
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
@@ -192,18 +175,21 @@ websocket.onmessage = async (message) => {
         userList.append(...userListElements) // так добавляем несколько <li> в <ul.user-list>
     }
 
+
+    function callHandler(e) {
+        console.log('in callHandler(e)');
+        const target = e.target;
+        console.log('target.tagName: ', target.tagName);
+        if(target.tagName.trim().toUpperCase() === 'LI'){
+            console.log(`calling initiate(${clientId}, ${target.textContent})`);
+            targetIdGlobal = target.textContent;
+            initiate(clientId, target.textContent);
+        }
+    }
 };
 
 
-function callHandler(e) {
-    console.log('in callHandler(e)');
-    const target = e.target;
-    console.log('target.tagName: ', target.tagName);
-    if(target.tagName.trim().toUpperCase() === 'LI'){
-        `calling initiate(${clientId}, ${target.textContent})`
-        initiate(clientId, target.textContent);
-    }
-}
+
 
 
 function peersHandler (){
@@ -217,13 +203,14 @@ function peersHandler (){
 
     peerConnection.onicecandidate = (event) => {  // Отправка кандидатов
         if (event.candidate) {
+            console.log('Проблемное место:  ICE candidate sening to ', targetIdGlobal);
             console.log('Sending candidate: ', event.candidate);
             websocket.send(JSON.stringify({
                 type: 'candidate',
                 candidate: event.candidate,
-                targetId: targetId, // Отправляем ICE-кандидата конкретному клиенту
+                targetId: targetIdGlobal, // Отправляем ICE-кандидата конкретному клиенту //FIXME сюда в targetId приходит "Mary" почему-то
             }));
-            console.log('ICE candidate sent');
+            console.log('Проблемное место:  ICE candidate sent to ', targetIdGlobal);
         }
     };
 
