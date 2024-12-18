@@ -1,5 +1,6 @@
 import {WebSocketServer} from "ws";
 import {getSession} from './handleUpgradeToWS.js';
+let forwardedCandidateLoggerFlag = false;
 
 const wss = new WebSocketServer({noServer: true});
 
@@ -80,7 +81,7 @@ export default function attachWebSocketHandlers(socket) {
                         offerTargetWs.send(JSON.stringify({
                             type: 'offer', sdp: data.sdp, from: ws.clientId,
                         }));
-                        console.log(`Forwarded offer from ${ws.clientId} to ${data.targetId}`);
+                        // console.log(`Forwarded offer from ${ws.clientId} to ${data.targetId}`);
                     }
                     break;
 
@@ -90,21 +91,24 @@ export default function attachWebSocketHandlers(socket) {
                         answerTargetWs.send(JSON.stringify({
                             type: 'answer', sdp: data.sdp, from: ws.clientId,
                         }));
-                        console.log(`Forwarded answer from ${ws.clientId} to ${data.targetId}`);
+                        // console.log(`Forwarded answer from ${ws.clientId} to ${data.targetId}`);
                         // console.log('SDP: ', data.sdp);
                     }
                     break;
 
                 case 'candidate':
                     const candidateTargetWs = clients.get(data.targetId).ws;
-                    console.log('in case candidate: ');
+                    // console.log('in case candidate: ');
                     if (candidateTargetWs) {
-                        console.log('passing candidate: ', data.candidate);
+                        // console.log('data.candidate: ', data.candidate);
 
                         candidateTargetWs.send(JSON.stringify({
                             type: 'candidate', candidate: data.candidate, from: ws.clientId,
                         }));
-                        console.log(`Forwarded candidate from ${ws.clientId} to ${data.targetId}`);
+                        if (!forwardedCandidateLoggerFlag) {
+                            console.log(`Forwarded candidate from ${ws.clientId} to ${data.targetId}`);
+                            forwardedCandidateLoggerFlag= true;
+                        }
                     }
                     break;
 
@@ -169,8 +173,8 @@ function issueUniqueName(suggestedName, session) {
 function register(registeredName, session, ws) {
     ws.clientId = registeredName; // записать основным ключём сюда подобранное уникальное имя
     clients.set(registeredName, {ws: ws, session: session});  //в Map, по ключу клиентского Id размещаем этот объект ws, который потом перешлём собеседнику для создания связи
-    console.log(`registeredName : ${registeredName}`);
-    console.log("session.clientId: ", `${session.clientId + " attached to-> " + registeredName}`)
+    // console.log(`registeredName : ${registeredName}`);
+    // console.log("session.clientId: ", `${session.clientId + " attached to-> " + registeredName}`)
     prnClients("list of clients (at end of register-> ) ");
     return updatedUserList();
 }
