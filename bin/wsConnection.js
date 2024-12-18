@@ -35,7 +35,7 @@ export default function attachWebSocketHandlers(socket) {
                     // console.log('register ->');
                     //проверка имени с фронта на уникальность среди logged in юзеров
                     const registeredName = issueUniqueName(data.userName, session); // подобрать уникальное имя в случае, если пришёл не уникальный пользователь и вернуть в data.userName
-                    register(registeredName, session, ws);
+                    const updatedUserList = register(registeredName, session, ws);
 
                     ws.send(JSON.stringify({
                         type: "registered",
@@ -43,7 +43,9 @@ export default function attachWebSocketHandlers(socket) {
                         uniqueName: registeredName
                     }));
 
-
+                    clients.forEach((c) => {
+                        c.ws.send(JSON.stringify({type: 'updateUsers', payload: updatedUserList}))
+                    })
                     break;
 
 
@@ -170,5 +172,14 @@ function register(registeredName, session, ws) {
     console.log(`registeredName : ${registeredName}`);
     console.log("session.clientId: ", `${session.clientId + " attached to-> " + registeredName}`)
     prnClients("list of clients (at end of register-> ) ");
+    return updatedUserList();
+}
+
+function updatedUserList() {
+    const clientsArray = [];
+    clients.forEach((client) => {
+        clientsArray.push(client.ws.clientId);
+    })
+    return clientsArray;
 }
 

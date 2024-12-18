@@ -4,7 +4,12 @@ body {
 }
 .container {display:flex; flex-direction: row; margin: 10px}
 
-p {font-size: 2em;}
+h1, h2, h3, h4 {font-weight: bold}
+
+h1 {font-size: 2em;}
+h2 {font-size: 1.5em;}
+h3 {font-size: 1em;}
+h4 {font-size: 0.5em;}
 
 a
 { color: #005fff;
@@ -12,22 +17,17 @@ a
 display: block;
 padding: 0.5em 0.5em 0.5em}
 
-#localVideo {
-  align-self: flex-end;
-  width: 200px;
-  height: auto;
-  bottom: 10px;
-  right: 10px;
-  border: 2px solid white;
-}
-
 #remoteVideo {
-  align-self: flex-end;
+  align-self: flex-start;
   width: 60%;
   /*height: auto;*/
   aspect-ratio: 4 / 3;
   display: block;
   margin: 10px auto;
+}
+
+.users {
+  align-self: flex-start;
 }
 
 .selector-box {
@@ -54,6 +54,15 @@ label {
   margin: 2px;
   padding: 2px 15px;
   width: auto;
+}
+
+#localVideo {
+  align-self: flex-end;
+  width: 200px;
+  height: auto;
+  bottom: 10px;
+  right: 10px;
+  border: 2px solid white;
 }
 .dashboard {
   display: flex;

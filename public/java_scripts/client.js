@@ -23,10 +23,11 @@ function setUniqueName(uniqueName){
     clientId = uniqueName;
     selectClientEl.value = uniqueName;
     localStorage.setItem('clientId', uniqueName)
-    const container = document.querySelector('.container');
-    const uniqueNameWarningEl = document.createElement('p')
-    uniqueNameWarningEl.textContent = `Ваше уникальное имя в системе: ${uniqueName}`
-    container.appendChild(uniqueNameWarningEl);
+    // Вывод на экран сообщения о фактическом имени нового зарегистрированного юзера:
+    /*    const container = document.querySelector('.container');
+        const uniqueNameWarningEl = document.createElement('p')
+        uniqueNameWarningEl.textContent = `Ваше уникальное имя в системе: ${uniqueName}`
+        container.appendChild(uniqueNameWarningEl);*/
 }
 
 events.forEach(e => confirmSelectUserEl.addEventListener(e, handlSelectClient));
@@ -107,6 +108,7 @@ const initiate = (clientId, targetId) => {
 websocket.onmessage = async (message) => {
     const data = JSON.parse(message.data);
 
+
     switch (data.type) {
 
         case 'registered':
@@ -168,9 +170,33 @@ websocket.onmessage = async (message) => {
             console.log(data.message)
             break;
 
+        case 'updateUsers':
+            console.log(`updatedUserList: ${data.payload}`)
+            updateUsers(data.payload);
+            break;
+
         default:
             console.error('Unknown message type: ', data.type);
     }
+
+
+    function updateUsers(userListNames) {
+        const userList = document.querySelector(".users-list")
+        const userListElements = userListNames.flatMap((userName) => {
+            if (userName !== clientId) {
+                const liEl = document.createElement("li")
+                liEl.className = 'user-list-item'
+                liEl.textContent = userName;
+                return liEl;
+            }
+            return [] // если нашёл собственное имя - вернуть  пустой массив, который исключится из выдачи методом flat(), flatMap()
+        })
+        userList.innerHTML = '';
+        userList.append(...userListElements) // так добавляем несколько <li> в <ul.user-list>
+        console.log('должен вывестись на экран новый список юзеров: ', userListNames)
+
+    }
+
 };
 
 
